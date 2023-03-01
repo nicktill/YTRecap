@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>YouTube Caption Summarizer</title>
+  </head>
+  <body>
+    <h1>YouTube Caption Summarizer</h1>
+    {% if error %}
+    <p>{{ error }}</p>
+    {% endif %}
+    <form method="POST">
+      <input type="text" name="url" placeholder="Enter a YouTube URL" />
+      <input type="submit" value="Go" />
+    </form>
+    {% if summary %}
+    <h2>Summary:</h2>
+    <p>{{ summary }}</p>
+    {% endif %}
+  </body>
+</html>
