@@ -2,6 +2,7 @@
 <html>
   <head>
     <title>YouTube Caption Summarizer</title>
+    <link rel="stylesheet" href="../static/styles.css" />
   </head>
   <body>
     <h1>YouTube Caption Summarizer</h1>
@@ -13,8 +14,8 @@
       <input type="submit" value="Go" />
     </form>
     {% if summary %}
-    <h2>Summary:</h2>
-    <p>{{ summary }}</p>
+    <h2 class="summary-heading">Summary:</h2>
+    <p class="summary-text">{{ summary }}</p>
     {% endif %}
   </body>
 </html>
