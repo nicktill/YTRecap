@@ -1,8 +1,14 @@
+from transformers import pipeline
+import nltk
+from nltk.tokenize import word_tokenize
+from nltk.corpus import stopwords
+from nltk.stem import WordNetLemmatizer
 from flask import Flask, render_template, request
 from youtube_transcript_api import YouTubeTranscriptApi
 import re
 
 app = Flask(__name__)
+summarizer = pipeline("summarization", model="facebook/bart-large-cnn")
 
 def parse_text_info(input_list):
     pattern = re.compile(r"'text':\s+'(?:\[[^\]]*\]\s*)?([^']*)'")
@@ -25,7 +31,8 @@ def get_transcript():
     if match:
         video_id = match.group(0)
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
-        summary = parse_text_info(transcript)
+        captions = parse_text_info(transcript)
+        summary = summarizer(captions, max_length=100, min_length=30, do_sample=False)
         return render_template('index.html', summary=summary)
     else:
         error = 'Invalid YouTube URL'
