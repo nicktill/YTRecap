@@ -14,13 +14,7 @@ Install the dependencies by running npm install in the root directory of the pro
 
 Create a virtual environment and install the required Python packages by running pip install -r requirements.txt in the python directory of the project.
 
-Set up a Google Cloud project and enable the YouTube Data API. Follow the instructions provided by Google to obtain a YouTube Data API key.
-
-Create a new file called .env.local in the root directory of the project, and add the following lines to the file:
-
+Navigte to the correct directory and run the following: 
 ```
-NEXT_PUBLIC_YOUTUBE_API_KEY=YOUR_YOUTUBE_API_KEY
+python3 transcript.py
 ```
-Replace YOUR_YOUTUBE_API_KEY with your own YouTube Data API key.
-
-Start the development server by running npm run dev in the root directory of the project. The application should now be running at http://localhost:3000.
