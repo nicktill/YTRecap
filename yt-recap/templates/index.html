@@ -10,10 +10,10 @@
     />
   </head>
   <body>
-    <h1>YTRecap</h1>
-    {% if error %}
-    <p>{{ error }}</p>
-    {% endif %}
+    <h1 class="logo">
+      YTRecap
+      <img src="../static/youtube.png" alt="yt-logo" />
+    </h1>
     <form method="POST">
       <input type="text" name="url" placeholder="Enter a YouTube URL" />
       <input type="submit" value="Go" />
@@ -21,6 +21,8 @@
     {% if summary %}
     <h2 class="summary-heading">Summary:</h2>
     <p class="summary-text">{{ summary }}</p>
+    {% endif %} {% if error %}
+    <p class="error">{{ error }}</p>
     {% endif %}
   </body>
 </html>
