@@ -30,7 +30,6 @@ def generate_summary(captions):
         stop=None,
         temperature=0.5,
     )
-
     summary = response.choices[0].text.strip()
     return summary
 
