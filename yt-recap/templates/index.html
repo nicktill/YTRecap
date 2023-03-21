@@ -14,15 +14,38 @@
       YTRecap
       <img src="../static/youtube.png" alt="yt-logo" />
     </h1>
+    <div class="loader" id="loader"></div>
     <form method="POST">
       <input type="text" name="url" placeholder="Enter a YouTube URL" />
       <input type="submit" value="Go" />
     </form>
-    {% if summary %}
-    <h2 class="summary-heading">Summary:</h2>
-    <p class="summary-text">{{ summary }}</p>
+
+    {% if video_info %}
+    <div class="video-container">
+      <div class="video-info">
+        <img src="{{ video_info['thumbnail'] }}" alt="video-thumbnail" />
+        <h2>{{ video_info['title'] }}</h2>
+        <p>Author: {{ video_info['author'] }}</p>
+        <p>Published On: {{ video_info['date'] }}</p>
+        <p>Views: {{ video_info['view_count'] }}</p>
+      </div>
+    </div>
+    {% endif %} {% if summary %}
+    <div class="summary-container">
+      <h2 class="summary-heading">Summary:</h2>
+      <p class="summary-text">{{ summary }}</p>
+    </div>
     {% endif %} {% if error %}
     <p class="error">{{ error }}</p>
     {% endif %}
+    <!-- loading animation -->
+    <script>
+      document
+        .querySelector("form")
+        .addEventListener("submit", function (event) {
+          // Show the loader
+          document.getElementById("loader").style.display = "block";
+        });
+    </script>
   </body>
 </html>
