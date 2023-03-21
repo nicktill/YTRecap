@@ -13,6 +13,7 @@ app = Flask(__name__)
 
 # Set OpenAI API key
 openai.api_key = os.getenv("OPENAI_API_KEY")
+print("API KEY HERE" , openai.api_key)
 
 # Define a function to format video duration
 def format_duration(duration_string):
@@ -50,7 +51,6 @@ def format_date(date_string):
     # Format the date string
     return date.strftime("%B %d, %Y")
 
-# Define a function to parse text information from the video transcript
 def parse_text_info(input_list):
     # Define a regular expression pattern to match the text information
     pattern = re.compile(r"'text':\s+'(?:\[[^\]]*\]\s*)?([^']*)'")
@@ -61,7 +61,9 @@ def parse_text_info(input_list):
         match = pattern.search(str(item))
         if match:
             text = match.group(1).strip()
-            output += " ".join(text.split()) + " "
+            text = text.replace('\n', ' ')
+            text = re.sub(' +', ' ', text)
+            output += text + " "
     # Return the parsed text information
     return output.strip()
 
@@ -69,6 +71,7 @@ def parse_text_info(input_list):
 def generate_summary(captions):
     # Define the prompt for the OpenAI API
     prompt = f"These are captions for a youtube video, can you provide a summary on this youtube video based on the closed captions provided here:\n\n{captions}\n"
+    print(prompt)
     # Generate a summary using the OpenAI API
     response = openai.Completion.create(
         engine="text-davinci-002",
@@ -100,6 +103,8 @@ def get_transcript():
         video_id = match.group(0)
         # Retrieve video information from YouTube Data API
         youtube = build('youtube', 'v3', developerKey=os.getenv("YOUTUBE_API_KEY"))
+        youtube_api_key = os.getenv("YOUTUBE_API_KEY")
+        print("YOUTUBE KEY HERE", youtube_api_key)
         video_response = youtube.videos().list(
             part='snippet,statistics',
             id=video_id
@@ -117,6 +122,7 @@ def get_transcript():
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
         # Parse the text information from the transcript
         captions = parse_text_info(transcript)
+        print(captions)
         # Generate a summary based on the closed captions
         summary = generate_summary(captions)
         
