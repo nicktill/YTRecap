@@ -1,19 +1,36 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>YouTube Caption Summarizer</title>
+    <title>YTRecap</title>
     <link rel="stylesheet" href="../static/styles.css" />
     <link rel="preconnect" href="https://fonts.gstatic.com" />
+    <link
+      rel="stylesheet"
+      href="../static/dark-theme.css"
+      id="dark-theme"
+      disabled
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css"
+    />
+    <!-- add favicon youtube.png -->
+    <link rel="icon" href="../static/recap.svg" />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap"
       rel="stylesheet"
     />
   </head>
   <body>
-    <h1 class="logo">
-      YTRecap
-      <img src="../static/youtube.png" alt="yt-logo" />
-    </h1>
+    <div class="header">
+      <div class="toggle-container">
+        <i id="dark-mode-toggle" class="fas fa-moon"></i>
+      </div>
+      <h1 class="logo">
+        YTRecap
+        <img src="../static/youtube.png" alt="yt-logo" />
+      </h1>
+    </div>
     <div class="loader" id="loader"></div>
     <form method="POST">
       <input type="text" name="url" placeholder="Enter a YouTube URL" />
@@ -48,4 +65,36 @@
         });
     </script>
   </body>
+  <script>
+    const darkModeToggle = document.getElementById("dark-mode-toggle");
+    const darkThemeStylesheet = document.getElementById("dark-theme");
+
+    function enableDarkMode() {
+      darkThemeStylesheet.disabled = false;
+      localStorage.setItem("darkMode", "enabled");
+    }
+
+    function disableDarkMode() {
+      darkThemeStylesheet.disabled = true;
+      localStorage.setItem("darkMode", "disabled");
+    }
+
+    function toggleDarkMode() {
+      if (darkThemeStylesheet.disabled) {
+        enableDarkMode();
+      } else {
+        disableDarkMode();
+      }
+    }
+
+    darkModeToggle.addEventListener("click", toggleDarkMode);
+
+    // Initialize the user's theme preference
+    const darkModeSetting = localStorage.getItem("darkMode");
+    if (darkModeSetting === "enabled") {
+      enableDarkMode();
+    } else {
+      disableDarkMode();
+    }
+  </script>
 </html>

@@ -128,3 +128,18 @@ input[type="submit"]:hover {
     transform: rotate(360deg);
   }
 }
+
+.header {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.toggle-container {
+  position: absolute;
+  left: 10px;
+  top: 10px;
+  font-size: 24px;
+  cursor: pointer;
+}
