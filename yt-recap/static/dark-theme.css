@@ -1,0 +1,15 @@
+/* dark-theme.css */
+body {
+  background-color: #212121;
+  color: #f5f5f5;
+}
+
+input[type="text"],
+.video-info,
+.summary-container {
+  background-color: #333333;
+}
+
+input[type="submit"]:hover {
+  background-color: #ff2d2d;
+}
