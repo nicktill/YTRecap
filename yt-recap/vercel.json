@@ -1,6 +1,0 @@
-{
-  "routes": [{ "handle": "filesystem" }, { "src": "/(.*)", "dest": "/" }],
-  "rewrites": [
-    { "source": "/(.*)", "destination": "yt-recap/templates/index.html" }
-  ]
-}
