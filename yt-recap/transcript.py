@@ -138,4 +138,4 @@ def get_transcript(path):
         return render_template('index.html', video_info=video_info, summary=summary)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
