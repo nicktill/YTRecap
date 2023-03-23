@@ -42,19 +42,6 @@ def format_date(date_string):
     date = datetime.datetime.fromisoformat(date_string[:-1])
     return date.strftime("%B %d, %Y")
 
-# Function to generate summary using OpenAI API
-def generate_summary(youtube_url, summary_length):
-    prompt = f"Can you summarize this video {youtube_url} in around {summary_length} words?"
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        max_tokens=1000,
-        n=1,
-        stop=None,
-        temperature=0.5,
-    )
-    summary = response.choices[0].text.strip()
-    return summary
 
 @app.route('/')
 def index():
@@ -66,13 +53,12 @@ def get_summary():
     match = re.search(r"(?<=v=)[\w-]+|[\w-]+(?<=/v/)|(?<=youtu.be/)[\w-]+", url)
     if match:
         video_id = match.group(0)
+        # must use YT KEY for the information in video_info below
         youtube = build('youtube', 'v3', developerKey=os.environ.get('YT_KEY'))
         video_response = youtube.videos().list(
             part='snippet,statistics',
             id=video_id
         ).execute()
-
-
 
         # Extract video informtion
         video_info = {
@@ -82,11 +68,27 @@ def get_summary():
             'view_count': format_view_count(video_response['items'][0]['statistics']['viewCount']),
             'thumbnail': video_response['items'][0]['snippet']['thumbnails']['medium']['url'],
         }
+        video_title = video_response['items'][0]['snippet']['title']
 
     summary_length = request.form.get('summary_length')
     print("summary length here <=====================", summary_length)
-    summary = generate_summary(url, summary_length)
+    summary = generate_summary(url, summary_length, video_title)
     return render_template('index.html', video_info=video_info, summary=summary)
+
+# Function to generate summary using OpenAI API
+def generate_summary(youtube_url, summary_length, video_title):
+    prompt = f"Can you summarize this video {youtube_url} in around {summary_length} words, the title of the video is {video_title}?"
+    print("prompt here <=====================", prompt)
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=prompt,
+        max_tokens=1000,
+        n=1,
+        stop=None,
+        temperature=0.5,
+    )
+    summary = response.choices[0].text.strip()
+    return summary
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

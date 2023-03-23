@@ -57,16 +57,16 @@ def parse_text_info(input_list):
     return output.strip()
 
 # Function to generate summary using OpenAI API
-def generate_summary(captions, summary_length):
+def generate_summary(captions, summary_length, yt_url, yt_title):
     # Set default  length to 200 tokens
     default_value = 200
     # Set summary length to default value if user does not select a summary length
     summary_length = summary_length if summary_length is not None else default_value
-    prompt = f"These are captions for a youtube video, can you provide a summary on this youtube video based on the closed captions provided here:\n\n{captions}\n"
+    prompt = f"Can you provide a summary on this youtube video based on the closed captions provided here:\n\n {captions} \n in approximately {summary_length} words? \n\Here is the video link: {yt_url} along with its title: {yt_title}"
     response = openai.Completion.create(
         engine="text-davinci-003",
         prompt=prompt,
-        max_tokens= summary_length,
+        max_tokens= 1000,
         n=1,
         stop=None,
         temperature=0.5,
@@ -107,9 +107,10 @@ def get_transcript(path):
     print(captions)
 
     # Generate summary based on user-selected summary length
+    yt_title = video_response['items'][0]['snippet']['title']
     summary_length = int(request.form['summary_length'])
     print("SUMMARY LENGTH HERE", summary_length)
-    summary = generate_summary(captions, summary_length)
+    summary = generate_summary(captions, summary_length, url, yt_title)
 
     # Render the result in the template
     return render_template('index.html', video_info=video_info, summary=summary)
