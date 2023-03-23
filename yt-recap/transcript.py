@@ -7,12 +7,16 @@ import re
 from googleapiclient.discovery import build
 import datetime
 import isodate
+from dotenv import load_dotenv
 
 # Initialize the Flask app
 app = Flask(__name__)
 
+load_dotenv()
+
+
 # Set OpenAI API key
-openai.api_key = os.getenv("OPENAI_API_KEY")
+openai.api_key = os.environ.get('OPENAI_KEY')
 print("API KEY HERE" , openai.api_key)
 
 # Define a function to format video duration
@@ -68,15 +72,16 @@ def parse_text_info(input_list):
     return output.strip()
 
 # Define a function to generate a summary of the video based on its closed captions
-def generate_summary(captions):
+def generate_summary(captions, summary_length):
     # Define the prompt for the OpenAI API
     prompt = f"These are captions for a youtube video, can you provide a summary on this youtube video based on the closed captions provided here:\n\n{captions}\n"
     print(prompt)
+
     # Generate a summary using the OpenAI API
     response = openai.Completion.create(
-        engine="text-davinci-002",
+        engine="text-davinci-003",
         prompt=prompt,
-        max_tokens=150,
+        max_tokens= summary_length,
         n=1,
         stop=None,
         temperature=0.5,
@@ -86,15 +91,15 @@ def generate_summary(captions):
     # Return the summary text
     return summary
 
-# Define the index route for the Flask app
-@app.route('/')
-def index():
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def index(path):
     # Render the index.html template
     return render_template('index.html')
 
-# Define the route for the form submission
-@app.route('/', methods=['POST'])
-def get_transcript():
+@app.route('/', methods=['POST'], defaults={'path': ''})
+@app.route('/<path:path>', methods=['POST'])
+def get_transcript(path):
     url = request.form['url']
     # Use regular expressions to extract the video ID from the URL
     match = re.search(r"(?<=v=)[\w-]+|[\w-]+(?<=/v/)|(?<=youtu.be/)[\w-]+", url)
@@ -102,8 +107,8 @@ def get_transcript():
         # Extract the video ID from the regular expression match
         video_id = match.group(0)
         # Retrieve video information from YouTube Data API
-        youtube = build('youtube', 'v3', developerKey=os.getenv("YOUTUBE_API_KEY"))
-        youtube_api_key = os.getenv("YOUTUBE_API_KEY")
+        youtube = build('youtube', 'v3', developerKey=os.environ.get('YT_KEY'))
+        youtube_api_key = os.environ.get('YT_KEY')
         print("YOUTUBE KEY HERE", youtube_api_key)
         video_response = youtube.videos().list(
             part='snippet,statistics',
@@ -123,15 +128,14 @@ def get_transcript():
         # Parse the text information from the transcript
         captions = parse_text_info(transcript)
         print(captions)
+        # Get the summary length from the form data
+        summary_length = int(request.form['summary_length'])
+        print("SUMMARY LENGTH HERE", summary_length)
         # Generate a summary based on the closed captions
-        summary = generate_summary(captions)
-        
+        summary = generate_summary(captions, summary_length)
+
         # Render the index.html template with the video information and summary
         return render_template('index.html', video_info=video_info, summary=summary)
-    else:
-        # Render the index.html template with an error message
-        error = 'Invalid YouTube URL'
-        return render_template('index.html', error=error)
 
 if __name__ == '__main__':
     app.run(debug=True)

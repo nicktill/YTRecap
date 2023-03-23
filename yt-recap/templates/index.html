@@ -34,6 +34,20 @@
     <div class="loader" id="loader"></div>
     <form method="POST">
       <input type="text" name="url" placeholder="Enter a YouTube URL" />
+      <div class="select-container">
+        <select
+          aria-placeholder="Summary Length"
+          class="summary_length"
+          name="summary_length"
+          type="number"
+        >
+          <option class="option_length" value="" disabled selected>⬇</option>
+          <option class="option_length" value="200">200</option>
+          <option class="option_length" value="500">500</option>
+          <option class="option_length" value="1000">1K</option>
+          <option class="option_length" value="2000">2K</option>
+        </select>
+      </div>
       <input type="submit" value="Go" />
     </form>
 
