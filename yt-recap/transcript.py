@@ -61,9 +61,8 @@ def parse_text_info(input_list):
 # Function to generate summary using OpenAI API
 def generate_summary(captions, summary_length, yt_url, yt_title):
     # Set default length to 200 tokens
-    default_value = 200
     # Set summary length to default value if user does not select a summary length
-    summary_length = summary_length if summary_length is not None else default_value
+    print("SUMMARY LENGTH HERE", summary_length)
     
     prompt = f"Can you provide a summary on this youtube video based on the closed captions provided here:\n\n {captions} \n in approximately {summary_length} words? \n\Here is the video link: {yt_url} along with its title: {yt_title}"
     response = openai.Completion.create(
@@ -87,10 +86,13 @@ def index(path):
 # Get transcript and generate summary
 @app.route('/', methods=['POST'], defaults={'path': ''})
 @app.route('/<path:path>', methods=['POST'])
+# Get transcript and generate summary
+@app.route('/', methods=['POST'], defaults={'path': ''})
+@app.route('/<path:path>', methods=['POST'])
 def get_transcript(path):
     # Get video URL from user input
     url = request.form['url']
-    
+
     # Extract video ID from URL using regex
     match = re.search(r"(?<=v=)[\w-]+|[\w-]+(?<=/v/)|(?<=youtu.be/)[\w-]+", url)
     # If match is found, get video information from YouTube API
@@ -115,13 +117,17 @@ def get_transcript(path):
     transcript = YouTubeTranscriptApi.get_transcript(video_id)
     captions = parse_text_info(transcript)
 
-    # Generate summary based on user-selected summary length
+# Generate summary based on user-selected summary length
     yt_title = video_response['items'][0]['snippet']['title']
-    summary_length = int(request.form['summary_length'])
+    summary_length = request.form['summary_length']
+    if summary_length:
+        summary_length = int(summary_length)
+    else:
+        summary_length = int(200)
     summary = generate_summary(captions, summary_length, url, yt_title)
 
     # Render the result in the template
-    return render_template('index.html', video_info=video_info, summary=summary)
+    return render_template('index.html', video_info=video_info, summary=summary, video_id=video_id, summary_length=summary_length)
 
 # Run Flask app
 if __name__ == '__main__':
