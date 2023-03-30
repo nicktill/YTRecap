@@ -68,7 +68,7 @@ def generate_summary(captions, summary_length, yt_url, yt_title):
     response = openai.Completion.create(
         engine="text-davinci-003",
         prompt=prompt,
-        max_tokens= 1000,
+        max_tokens= 400,
         n=1,
         stop=None,
         temperature=0.5,
