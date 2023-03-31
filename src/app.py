@@ -63,19 +63,37 @@ def generate_summary(captions, summary_length, yt_url, yt_title):
     # Set default length to 200 tokens
     # Set summary length to default value if user does not select a summary length
     print("SUMMARY LENGTH HERE", summary_length)
+
+    try:
+        prompt = f"Can you provide a summary on this youtube video based on the closed captions provided here:\n\n {captions} \n in approximately {summary_length} words? \n\Here is the video link: {yt_url} along with its title: {yt_title}"
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens= 750,
+            n=1,
+            stop=None,
+            temperature=0.5,
+        )
+        # Remove newlines and extra spaces from summary
+        summary = response.choices[0].text.strip()
+    except openai.error.InvalidRequestError:
+        # Return error message if summary cannot be generated
+        # summary = "Uh oh! Sorry, we couldn't generate a summary for this video due to the video being too long. Please try a shorter video, this model handles videos up to 30 minutes in length with a 1000 length summary"
+         prompt = f"Can you summarize this video {yt_url} in around {summary_length} words, the title of the video is {yt_title}?"
+         print("Parsing API without captions due to long video...")
+         response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens= 750,
+            n=1,
+            stop=None,
+            temperature=0.5,
+        )
+        # Remove newlines and extra spaces from summary
+         summary = response.choices[0].text.strip()
     
-    prompt = f"Can you provide a summary on this youtube video based on the closed captions provided here:\n\n {captions} \n in approximately {summary_length} words? \n\Here is the video link: {yt_url} along with its title: {yt_title}"
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        max_tokens= 400,
-        n=1,
-        stop=None,
-        temperature=0.5,
-    )
-    # Remove newlines and extra spaces from summary
-    summary = response.choices[0].text.strip()
     return summary
+
 
 # Render index page
 @app.route('/', defaults={'path': ''})
