@@ -8,6 +8,7 @@ input[type="text"],
 .video-info,
 .summary-container {
   background-color: #333333;
+  color: #d6d6d6;
 }
 
 input[type="submit"]:hover {

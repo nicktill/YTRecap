@@ -119,7 +119,6 @@ def generateSummaryNoCaptions(summary_length, url, yt_title):
 def index(path):
     return render_template('index.html')
 
-
 # Get transcript and generate summary
 @app.route('/', methods=['POST'], defaults={'path': ''})
 @app.route('/<path:path>', methods=['POST'])
@@ -164,4 +163,4 @@ def get_transcript(path):
 
 # Run Flask app
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))

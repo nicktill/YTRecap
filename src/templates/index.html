@@ -31,9 +31,17 @@
         <img src="../static/youtube.png" alt="yt-logo" />
       </h1>
     </div>
+    <div class="hero">
+      <h1 class="hero-heading">Enter A YT Link To Summarize...</h1>
+    </div>
     <div class="loader" id="loader"></div>
     <form method="POST">
-      <input type="text" name="url" placeholder="Enter a YouTube URL" />
+      <input
+        type="text"
+        name="url"
+        placeholder="Enter a YouTube URL"
+        autocomplete="off"
+      />
       <div class="select-container">
         <select
           aria-placeholder="Summary Length"
@@ -71,7 +79,9 @@
     <div class="summary-container">
       <h2 class="summary-heading">Summary:</h2>
       <p class="summary-text">{{ summary }}</p>
+      <div class="button-container"></div>
     </div>
+
     {% endif %} {% if error %}
     <p class="error">{{ error }}</p>
     {% endif %}
@@ -88,7 +98,6 @@
   <script>
     const darkModeToggle = document.getElementById("dark-mode-toggle");
     const darkThemeStylesheet = document.getElementById("dark-theme");
-
     function enableDarkMode() {
       darkThemeStylesheet.disabled = false;
       localStorage.setItem("darkMode", "enabled");
