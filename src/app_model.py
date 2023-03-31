@@ -97,13 +97,9 @@ def index(path):
 # Get transcript and generate summary
 @app.route('/', methods=['POST'], defaults={'path': ''})
 @app.route('/<path:path>', methods=['POST'])
-# Get transcript and generate summary
-@app.route('/', methods=['POST'], defaults={'path': ''})
-@app.route('/<path:path>', methods=['POST'])
 def get_transcript(path):
     # Get video URL from user input
     url = request.form['url']
-
     # Extract video ID from URL using regex
     match = re.search(r"(?<=v=)[\w-]+|[\w-]+(?<=/v/)|(?<=youtu.be/)[\w-]+", url)
     # If match is found, get video information from YouTube API
@@ -114,7 +110,6 @@ def get_transcript(path):
             part='snippet,statistics',
             id=video_id
         ).execute()
-        
         # Extract video information
         video_info = {
             'title': video_response['items'][0]['snippet']['title'],
@@ -127,16 +122,13 @@ def get_transcript(path):
     # Get transcript and parse text
     transcript = YouTubeTranscriptApi.get_transcript(video_id)
     captions = parse_text_info(transcript)
-
 # Generate summary based on user-selected summary length
-    yt_title = video_response['items'][0]['snippet']['title']
     summary_length = request.form['summary_length']
     if summary_length:
         summary_length = int(summary_length)
     else:
         summary_length = int(200)
     summary = generate_summary(captions)
-
     # Render the result in the template
     return render_template('index.html', video_info=video_info, summary=summary, video_id=video_id)
 

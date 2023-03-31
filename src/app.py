@@ -83,7 +83,6 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title):
 
     except openai.error.InvalidRequestError:
         # Return error message if summary cannot be generated
-        # summary = "Uh oh! Sorry, we couldn't generate a summary for this video due to the video being too long. Please try a shorter video, this model handles videos up to 30 minutes in length with a 1000 length summary"
         summaryNoCaptions = generateSummaryNoCaptions(summary_length, yt_url, yt_title)
         return summaryNoCaptions
 
@@ -97,15 +96,20 @@ def generateSummaryNoCaptions(summary_length, url, yt_title):
         prompt = f"Can you write a summary about this video {url} in approximately {summary_length} words. The title of the video is {yt_title}?"
 
     print("Parsing API without captions due to long video OR not captions (or both)...")
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        max_tokens= 1500,
-        n=1,
-        stop=None,
-        temperature=0.5,
-    )
+    try: 
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens= 1500,
+            n=1,
+            stop=None,
+            temperature=0.5,
+        )
+    except: 
+        # Return error message if summary cannot be generated
+        summary = "Uh oh! Sorry, we couldn't generate a summary for this video due to the video being too long. Please try a shorter video, this model handles videos up to 30 minutes in length with a 1000 length summary"
     # Remove newlines and extra spaces from summary
+
     summary = response.choices[0].text.strip()
     return summary
 
@@ -115,9 +119,7 @@ def generateSummaryNoCaptions(summary_length, url, yt_title):
 def index(path):
     return render_template('index.html')
 
-# Get transcript and generate summary
-@app.route('/', methods=['POST'], defaults={'path': ''})
-@app.route('/<path:path>', methods=['POST'])
+
 # Get transcript and generate summary
 @app.route('/', methods=['POST'], defaults={'path': ''})
 @app.route('/<path:path>', methods=['POST'])
