@@ -21,5 +21,5 @@ Create a virtual environment and install the required Python packages by running
 
 Navigte to the correct directory and run the following: 
 ```
-python3 transcript.py
+python3 app.py
 ```
