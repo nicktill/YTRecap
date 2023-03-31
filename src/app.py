@@ -2,7 +2,7 @@
 import os
 import openai
 from flask import Flask, render_template, request
-from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api import YouTubeTranscriptApi, CouldNotRetrieveTranscript
 import re
 from googleapiclient.discovery import build
 import datetime
@@ -58,42 +58,56 @@ def parse_text_info(input_list):
             output += text + " "
     return output.strip()
 
+
 # Function to generate summary using OpenAI API
-def generate_summary(captions, summary_length, yt_url, yt_title):
+def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title):
     # Set default length to 200 tokens
     # Set summary length to default value if user does not select a summary length
-    print("SUMMARY LENGTH HERE", summary_length)
-
     try:
-        prompt = f"Can you provide a summary on this youtube video based on the closed captions provided here:\n\n {captions} \n in approximately {summary_length} words? \n\Here is the video link: {yt_url} along with its title: {yt_title}"
+        if summary_length > 500:
+            prompt = f"Can you provide a very long and in-depth summary on this YouTube video based on the closed captions provided here:\n\n {captions}\n\nHere is the video link: {yt_url} along with its title: {yt_title}"
+        else:
+            prompt = f"Can you provide a summary on this YouTube video based on the closed captions provided here:\n\n {captions}\n\nPlease keep it to approximately {summary_length} words.\n\nHere is the video link: {yt_url} along with its title: {yt_title}"
+            
         response = openai.Completion.create(
             engine="text-davinci-003",
             prompt=prompt,
-            max_tokens= 750,
+            max_tokens= 1500,
             n=1,
             stop=None,
             temperature=0.5,
         )
         # Remove newlines and extra spaces from summary
         summary = response.choices[0].text.strip()
+        return summary
+
     except openai.error.InvalidRequestError:
         # Return error message if summary cannot be generated
         # summary = "Uh oh! Sorry, we couldn't generate a summary for this video due to the video being too long. Please try a shorter video, this model handles videos up to 30 minutes in length with a 1000 length summary"
-         prompt = f"Can you summarize this video {yt_url} in around {summary_length} words, the title of the video is {yt_title}?"
-         print("Parsing API without captions due to long video...")
-         response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=prompt,
-            max_tokens= 750,
-            n=1,
-            stop=None,
-            temperature=0.5,
-        )
-        # Remove newlines and extra spaces from summary
-         summary = response.choices[0].text.strip()
-    
-    return summary
+        summaryNoCaptions = generateSummaryNoCaptions(summary_length, yt_url, yt_title)
+        return summaryNoCaptions
 
+
+#  - This is a fallback function to generate a summary when no captions are provided by YouTube
+# - This function is called when the video is too long (causes character limit to openAI API, or there are no captions)
+def generateSummaryNoCaptions(summary_length, url, yt_title):
+    if summary_length > 500: 
+        prompt = f"Can you write an very long in depth summary about this video {url} in approximately {summary_length} words. The title of the video is {yt_title}?"
+    else:
+        prompt = f"Can you write a summary about this video {url} in approximately {summary_length} words. The title of the video is {yt_title}?"
+
+    print("Parsing API without captions due to long video OR not captions (or both)...")
+    response = openai.Completion.create(
+        engine="text-davinci-003",
+        prompt=prompt,
+        max_tokens= 1500,
+        n=1,
+        stop=None,
+        temperature=0.5,
+    )
+    # Remove newlines and extra spaces from summary
+    summary = response.choices[0].text.strip()
+    return summary
 
 # Render index page
 @app.route('/', defaults={'path': ''})
@@ -110,7 +124,6 @@ def index(path):
 def get_transcript(path):
     # Get video URL from user input
     url = request.form['url']
-
     # Extract video ID from URL using regex
     match = re.search(r"(?<=v=)[\w-]+|[\w-]+(?<=/v/)|(?<=youtu.be/)[\w-]+", url)
     # If match is found, get video information from YouTube API
@@ -130,19 +143,19 @@ def get_transcript(path):
             'view_count': format_view_count(video_response['items'][0]['statistics']['viewCount']),
             'thumbnail': video_response['items'][0]['snippet']['thumbnails']['medium']['url'],
         }
-
     # Get transcript and parse text
-    transcript = YouTubeTranscriptApi.get_transcript(video_id)
-    captions = parse_text_info(transcript)
-
-# Generate summary based on user-selected summary length
     yt_title = video_response['items'][0]['snippet']['title']
-    summary_length = request.form['summary_length']
-    if summary_length:
-        summary_length = int(summary_length)
+    summary_length = int(request.form['summary_length'])
+    try: 
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        captions = parse_text_info(transcript)
+    except:
+        captions = None
+        
+    if captions:
+        summary = generateSummaryWithCaptions(captions, summary_length, url, yt_title)
     else:
-        summary_length = int(200)
-    summary = generate_summary(captions, summary_length, url, yt_title)
+        summary = generateSummaryNoCaptions(summary_length, url, yt_title)
 
     # Render the result in the template
     return render_template('index.html', video_info=video_info, summary=summary, video_id=video_id, summary_length=summary_length)
