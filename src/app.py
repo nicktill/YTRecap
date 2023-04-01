@@ -56,6 +56,7 @@ def parse_text_info(input_list):
             text = text.replace('\n', ' ')
             text = re.sub(' +', ' ', text)
             output += text + " "
+       
     return output.strip()
 
 
@@ -145,6 +146,9 @@ def get_transcript(path):
             'view_count': format_view_count(video_response['items'][0]['statistics']['viewCount']),
             'thumbnail': video_response['items'][0]['snippet']['thumbnails']['medium']['url'],
         }
+    else:
+        return render_template('index.html', error="Invalid YouTube URL")
+    
     # Get transcript and parse text
     yt_title = video_response['items'][0]['snippet']['title']
     summary_length = int(request.form['summary_length'])
