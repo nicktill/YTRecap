@@ -102,25 +102,6 @@ input[type="text"]:focus {
   margin-top: 0;
 }
 
-.hero-text {
-  display: flex;
-  text-align: center;
-  align-items: center;
-  margin-top: 20px; /* adjust the margin as needed */
-}
-
-.hero-heading {
-  margin-bottom: 10px; /* adjust the margin as needed */
-}
-
-.hero {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  flex-direction: column;
-  margin-bottom: 20px; /* adjust the margin as needed */
-}
-
 .summary-text {
   font-size: 18px;
   line-height: 1.5;

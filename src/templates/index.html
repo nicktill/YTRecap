@@ -31,9 +31,6 @@
         <img src="../static/youtube.png" alt="yt-logo" />
       </h1>
     </div>
-    <div class="hero">
-      <h1 class="hero-heading">Enter A YT Link To Summarize...</h1>
-    </div>
     <div class="loader" id="loader"></div>
     <form method="POST">
       <input
@@ -50,7 +47,9 @@
           type="number"
           required
         >
-          <option class="option_length" value="" disabled selected>⬇</option>
+          <option class="option_length" value="" disabled selected>
+            Length
+          </option>
           <option class="option_length" value="200">Short</option>
           <option class="option_length" value="500">Medium</option>
           <option class="option_length" value="1000">Long</option>

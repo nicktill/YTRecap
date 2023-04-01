@@ -107,7 +107,8 @@ def generateSummaryNoCaptions(summary_length, url, yt_title):
         )
     except: 
         # Return error message if summary cannot be generated
-        summary = "Uh oh! Sorry, we couldn't generate a summary for this video due to the video being too long. Please try a shorter video, this model handles videos up to 30 minutes in length with a 1000 length summary"
+        summary = "Uh oh! Sorry, we couldn't generate a summary for this video and this error was not handled. Please visit source-code: https://github.com/nicktill/YTRecap/issues and open a new issue if possibe."
+        return summary
     # Remove newlines and extra spaces from summary
 
     summary = response.choices[0].text.strip()
