@@ -64,6 +64,23 @@ def parse_text_info(input_list):
             output += text + " "
     return output.strip()
 
+# removes timestamps, removes colons, breaks into list of strings so model can work on any video length.
+# should then each string in list into model endpoint, then display all the summaries concatenated.
+def process_text_for_model(text):
+    text = re.sub(r'\d+:\d+:\d+(?:\.\d+)?\s*', '', text)  # remove timestamps
+     # Remove linebreaks
+    text = text.replace('\n', ' ')
+    text = re.sub(r'[:\d]+', '', text)
+    text = re.sub(r"\n", " ", text)
+
+    # split text into chunks of maximum 1024 tokens
+    tokens = text.split()
+    max_tokens = 1024
+    chunks = [tokens[i:i+max_tokens] for i in range(0, len(tokens), max_tokens)]
+
+    # join each chunk of tokens to form text and return as a list
+    return [' '.join(chunk) for chunk in chunks]
+
 # Function to generate summary using OpenAI API
 def generate_summary(captions):
     # Create boto3 Session with AWS credentials
