@@ -64,8 +64,38 @@ def parse_text_info(input_list):
             output += text + " "
     return output.strip()
 
-# Function to generate summary using OpenAI API
-def generate_summary(captions):
+# removes timestamps, removes colons, breaks into list of strings so model can work on any video length.
+# should then each string in list into model endpoint, then display all the summaries concatenated.
+def preprocess_text_for_model(text):
+    text = re.sub(r'\d+:\d+:\d+(?:\.\d+)?\s*', '', text)  # remove timestamps
+     # Remove linebreaks
+    text = text.replace('\n', ' ')
+    text = re.sub(r'[:\d]+', '', text)
+    text = re.sub(r"\n", " ", text)
+
+    # split text into chunks of maximum 1024 tokens
+    tokens = text.split()
+    max_tokens = 1023
+    chunks = [tokens[i:i+max_tokens] for i in range(0, len(tokens), max_tokens)]
+
+    # join each chunk of tokens to form text and return as a list
+    return [' '.join(chunk) for chunk in chunks]
+
+def process_summary_text(text):
+    data = json.loads(text)
+    summary_text = data[0]['summary_text']
+    
+    # Remove special characters and extra spaces
+    cleaned_summary = summary_text.replace('\u00a0', ' ').replace('. \"', '.').replace('\"', '')
+    
+    return cleaned_summary
+
+# Function to generate summary using the AWS Sagemaker Endpoint
+def generate_summaries_with_endpoint(text):
+    
+    # normalize captions into smaller strings
+    inputchunks = preprocess_text_for_model(text)
+
     # Create boto3 Session with AWS credentials
     session = boto3.Session(
     aws_access_key_id=ACCESS_KEY,
@@ -74,7 +104,41 @@ def generate_summary(captions):
     )
 
     runtime = session.client("sagemaker-runtime") # Create a SageMaker runtime client
-    endpoint_name = "huggingface-pytorch-inference-2023-03-29-21-31-55-850" # The name of the endpoint that you created
+    endpoint_name = "huggingface-pytorch-inference-2023-04-06-18-39-13-226" # The name of the endpoint that you created
+    content_type = "application/json" # The MIME type of the input data in the request body
+    result = ""
+
+    for textchunk in inputchunks:
+    
+        payload = json.dumps({"inputs": textchunk}) # Create the payload that you will send to the endpoint
+        response = runtime.invoke_endpoint( # Invoke the endpoint
+            EndpointName=endpoint_name, 
+            ContentType=content_type, 
+            Body=payload
+        )
+        
+        print("Hi")
+
+        #parse the response
+        resultchunk = json.dumps(json.loads(response["Body"].read().decode())) # Get the result from the response
+        result += process_summary_text(resultchunk)
+
+    return result
+
+
+# Function to generate summary using OpenAI API
+def generate_summary(captions):
+    ## REPLACE CODE TO USE OPENAI API ##
+
+    # Create boto3 Session with AWS credentials
+    session = boto3.Session(
+    aws_access_key_id=ACCESS_KEY,
+    aws_secret_access_key=SECRET_KEY,
+    region_name='us-east-2'
+    )
+
+    runtime = session.client("sagemaker-runtime") # Create a SageMaker runtime client
+    endpoint_name = "huggingface-pytorch-inference-2023-04-06-18-39-13-226" # The name of the endpoint that you created
     content_type = "application/json" # The MIME type of the input data in the request body
     payload = json.dumps({"inputs": captions}) # Create the payload that you will send to the endpoint
 
@@ -128,7 +192,7 @@ def get_transcript(path):
         summary_length = int(summary_length)
     else:
         summary_length = int(200)
-    summary = generate_summary(captions)
+    summary = generate_summaries_with_endpoint(captions)
     # Render the result in the template
     return render_template('index.html', video_info=video_info, summary=summary, video_id=video_id)
 
