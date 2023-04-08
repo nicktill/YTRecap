@@ -1,8 +1,7 @@
-# YTRecap
+# YTRecap [https://ytrecap.org]
 <img width="466" alt="Screen Shot 2023-04-08 at 12 59 00 PM" src="https://user-images.githubusercontent.com/57879193/230733719-47c4d135-61c9-415b-8115-f1902c4cc64c.png">
-YTRecap is an application that uses the YouTube Data API to retrieve the closed captions of a YouTube video, and then passes them to an AI model to generate a summary of the video content. The application is built using Python Flask
 
-Live Site: https://ytrecap.org
+YTRecap is an application that uses the YouTube Data API to retrieve the closed captions of a YouTube video, and then passes them to an AI model to generate a summary of the video content. The application is built using Python Flask
 
 <img width="1145" alt="Screen Shot 2023-04-08 at 2 24 41 AM" src="https://user-images.githubusercontent.com/57879193/230706884-900acd32-9570-4b83-b614-04886a51f3fc.png">
 
