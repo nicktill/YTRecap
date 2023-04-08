@@ -66,7 +66,7 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
     # Set summary length to default value if user does not select a summary length
     try:
         if summary_length > 500:
-            prompt = f"Can you provide a very long and in-depth summary on this YouTube video based on the closed captions provided here:\n\n {captions}\n\nHere is the video link: {yt_url} along with its title: {yt_title}"
+            prompt = f"Can you provide a very long in depth summary on this YouTube video based on the closed captions provided here:\n\n {captions}\n\nPlease keep it to approximately {summary_length} words.\n\nHere is the video link: {yt_url} along with its title: {yt_title}"
         else:
             prompt = f"Can you provide a summary on this YouTube video based on the closed captions provided here:\n\n {captions}\n\nPlease keep it to approximately {summary_length} words.\n\nHere is the video link: {yt_url} along with its title: {yt_title}"
 
