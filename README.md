@@ -2,14 +2,14 @@
 
 YTRecap is an application that uses the YouTube Data API to retrieve the closed captions of a YouTube video, and then passes them to an AI model to generate a summary of the video content. The application is built using Python Flask
 
-Live Site: https://ytrecap-6rlt-main-enycjkvjqa-wm.a.run.app/
-
-![ezgif com-video-to-gif](https://user-images.githubusercontent.com/57879193/229016974-a28c32af-3120-43ec-b2a1-9775556afa8e.gif)
+Live Site: https://ytrecap.org
 
 <img width="1145" alt="Screen Shot 2023-04-08 at 2 24 41 AM" src="https://user-images.githubusercontent.com/57879193/230706884-900acd32-9570-4b83-b614-04886a51f3fc.png">
 
 <img width="1105" alt="Screen Shot 2023-04-08 at 2 24 32 AM" src="https://user-images.githubusercontent.com/57879193/230706886-4e05cdfb-53f1-4fa9-85a4-bde11e8b1e1a.png">
 
+
+https://user-images.githubusercontent.com/57879193/230707034-093e8767-b339-495c-b039-1bf87d34e784.mov
 
 ### Getting Started
 To use the YT-Recap application, follow these steps:
