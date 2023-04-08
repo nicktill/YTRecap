@@ -265,6 +265,11 @@ select {
   .select-container {
     display: none;
   }
+  .github-button,
+  .github-button:hover,
+  .github-container {
+    display: none;
+  }
 }
 
 /* other styles */
