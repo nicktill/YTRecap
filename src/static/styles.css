@@ -193,6 +193,37 @@ select {
   border-radius: 10px;
 }
 
+.github-container {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+}
+
+.github-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  border: 2px solid #fff;
+  padding: 5px 12px;
+  border-radius: 10px;
+  font-size: 14px;
+  text-decoration: none;
+  transition: 0.3s;
+}
+
+.github-button i {
+  margin-right: 5px;
+}
+
+.github-button:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+  color: #e8e468;
+  border-color: #ece283;
+}
+
 /* common styles */
 
 @media screen and (max-width: 600px) {
