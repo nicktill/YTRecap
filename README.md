@@ -6,9 +6,10 @@ Live Site: https://ytrecap-6rlt-main-enycjkvjqa-wm.a.run.app/
 
 ![ezgif com-video-to-gif](https://user-images.githubusercontent.com/57879193/229016974-a28c32af-3120-43ec-b2a1-9775556afa8e.gif)
 
-<img width="1130" alt="Screen Shot 2023-03-29 at 11 07 53 PM" src="https://user-images.githubusercontent.com/57879193/228718445-4b9b41c4-4d2e-4b98-bb44-445c3abe645a.png">
+<img width="1145" alt="Screen Shot 2023-04-08 at 2 24 41 AM" src="https://user-images.githubusercontent.com/57879193/230706884-900acd32-9570-4b83-b614-04886a51f3fc.png">
 
-<img width="1130" alt="Screen Shot 2023-03-29 at 11 08 06 PM" src="https://user-images.githubusercontent.com/57879193/228718451-def833d7-fb91-4e64-8942-c18bd73e0671.png">
+<img width="1105" alt="Screen Shot 2023-04-08 at 2 24 32 AM" src="https://user-images.githubusercontent.com/57879193/230706886-4e05cdfb-53f1-4fa9-85a4-bde11e8b1e1a.png">
+
 
 ### Getting Started
 To use the YT-Recap application, follow these steps:
