@@ -66,10 +66,10 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
     # Set summary length to default value if user does not select a summary length
     try:
         if summary_length > 500:
-            prompt = f"Can you provide a very long in depth summary on this YouTube video based on the closed captions provided here:\n\n {captions}\n\nPlease keep it to approximately {summary_length} words.\n\nHere is the video link: {yt_url} along with its title: {yt_title}"
+            prompt = f"Can you provide a very long and in-depth summary on this YouTube video based on the closed captions provided here:\n\n {captions}\n\nHere is the video link: {yt_url} along with its title: {yt_title}"
         else:
             prompt = f"Can you provide a summary on this YouTube video based on the closed captions provided here:\n\n {captions}\n\nPlease keep it to approximately {summary_length} words.\n\nHere is the video link: {yt_url} along with its title: {yt_title}"
-
+            
         response = openai.Completion.create(
             engine="text-davinci-003",
             prompt=prompt,
@@ -87,15 +87,13 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
         summaryNoCaptions = generateSummaryNoCaptions(summary_length, yt_url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
         return summaryNoCaptions
 
-
 #  - This is a fallback function to generate a summary when no captions are provided by YouTube
 # - This function is called when the video is too long (causes character limit to openAI API, or there are no captions)
 def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes):
     if summary_length > 500: 
-        prompt = f"Can you write an very long in depth summary about this video {url} (thats does not have closed captions provided) in approximately {summary_length} words. Please use the title of the video here: \n {yt_title}, \n the description here: \n {yt_description}, \n and the tags here: \n {yt_tags}. PLEASE ENSURE you are summarizing the correct video and not a random video?"
-
+        prompt = f"Can you write an very long in depth summary about this video {url} in approximately {summary_length} words. The title of the video is {yt_title} \n\n and the descripton is {yt_description}?"
     else:
-        prompt = f"Can you write a summary about this video {url} (thats does not have closed captions provided) in approximately {summary_length} words. Please use the title of the video here {yt_title},\n  the description here {yt_description} \n and the tags her: \n {yt_tags}. \n PLEASE ENSURE you are summarizing the correct video and not a random video??"
+        prompt = f"Can you write a summary about this video {url} in approximately {summary_length} words. The title of the video is {yt_title} \n\n and the descripton is {yt_description}?"
 
     print("Parsing API without captions due to long video OR not captions (or both)...")
     try: 

@@ -5,7 +5,7 @@
     <meta property="og:title" content="YTRecap" />
     <meta
       property="og:description"
-      content="Generate any youtube video summary in seconds"
+      content="Generate a summary of any YouTube video in seconds"
     />
     <meta property="og:image" content="https://ytrecap.org/static/recap.svg" />
     <title>YTRecap</title>
@@ -130,11 +130,13 @@
     function enableDarkMode() {
       darkThemeStylesheet.disabled = false;
       localStorage.setItem("darkMode", "enabled");
+      document.querySelector(".github-button").classList.add("dark-mode");
     }
 
     function disableDarkMode() {
       darkThemeStylesheet.disabled = true;
       localStorage.setItem("darkMode", "disabled");
+      document.querySelector(".github-button").classList.remove("dark-mode");
     }
 
     function toggleDarkMode() {

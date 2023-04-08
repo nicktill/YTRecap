@@ -14,3 +14,15 @@ input[type="text"],
 input[type="submit"]:hover {
   background-color: #ff2d2d;
 }
+
+.github-button.dark-mode {
+  background-color: rgba(0, 0, 0, 0.1);
+  color: #ffffff;
+  border: 2px solid #ffffff;
+}
+
+.github-button.dark-mode:hover {
+  background-color: rgba(0, 0, 0, 0.2);
+  color: #ece283;
+  border-color: #ece283;
+}
