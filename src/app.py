@@ -66,10 +66,10 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
     # Set summary length to default value if user does not select a summary length
     try:
         if summary_length > 500:
-            prompt = f"Can you provide a very long and in-depth summary on this YouTube video based on the closed captions provided here:\n\n {captions}\n\nHere is the video link: {yt_url} along with its title: {yt_title}"
+            prompt = f"You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via url). Please provide a extremely long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title}."
         else:
-            prompt = f"Can you provide a summary on this YouTube video based on the closed captions provided here:\n\n {captions}\n\nPlease keep it to approximately {summary_length} words.\n\nHere is the video link: {yt_url} along with its title: {yt_title}"
-            
+            prompt = f"You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via url). Please provide a long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title}."
+
         response = openai.Completion.create(
             engine="text-davinci-003",
             prompt=prompt,
@@ -91,10 +91,9 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
 # - This function is called when the video is too long (causes character limit to openAI API, or there are no captions)
 def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes):
     if summary_length > 500: 
-        prompt = f"Can you write an very long in depth summary about this video {url} in approximately {summary_length} words. The title of the video is {yt_title} \n\n and the descripton is {yt_description}?"
+        prompt = "You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via inputted url). Please provide a extremely long and comprehensive summary about this video \n\n URL: {url} \n\n Make sure summary length approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
     else:
-        prompt = f"Can you write a summary about this video {url} in approximately {summary_length} words. The title of the video is {yt_title} \n\n and the descripton is {yt_description}?"
-
+        prompt = f"You are an AI assistant for YTRecap, a webapp that provides video summaries based on any inputted youtube URL. You must provide in depth proffesional written summaries encompassing a summary overview for of any video provided. Can you write a summary about this video {url} in approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
     print("Parsing API without captions due to long video OR not captions (or both)...")
     try: 
         response = openai.Completion.create(
@@ -107,7 +106,7 @@ def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_
         )
     except: 
         # Return error message if summary cannot be generated
-        summary = "Uh oh! Sorry, we couldn't generate a summary for this video and this error was not handled. Please visit source-code: https://github.com/nicktill/YTRecap/issues and open a new issue if possibe (it is likely due to the content of the yt video description being too long, exceeding the character limit of the OpenAI API)"
+        summary = "Uh oh! Sorry, we couldn't generate a summary for this video and this error was not handled. Please visit source-code: https://github.com/nicktill/YTRecap/issues and open a new issue if possibe (it is likely due to the content of the yt video description being too long, exceeding the character limit of the OpenAI API).  "
         return summary
     # Remove newlines and extra spaces from summary
     summary = response.choices[0].text.strip()
