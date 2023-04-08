@@ -92,9 +92,9 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
 # - This function is called when the video is too long (causes character limit to openAI API, or there are no captions)
 def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes):
     if summary_length > 500: 
-        prompt = f"Can you write a lengthy in depth summary about this video URL: \n {url} (thats does not have closed captions provided) in approximately {summary_length} words. \n Please use the title of the video here: {yt_title}, \n the description here: {yt_description}, \n and the tags here: {yt_tags}. \nPLEASE ENSURE you are summarizing the correct video and not a random video\n The video duration is {yt_duration} so take that into account?"
+        prompt = f"Can you write a lengthy in depth summary about this video URL: \n {url} (thats does not have closed captions provided) in approximately {summary_length} words. \n Please use the title of the video here: {yt_title}, \n the description here: {yt_description}, \n and the tags here: {yt_tags}. \nPLEASE ENSURE you are summarizing the correct video and not a random video\n The video duration is {yt_duration} so take that into account"
     else:
-        prompt = f"Can you write a brief summary about this video URL: \n {url} (thats does not have closed captions provided) in approximately {summary_length} words. \n Please use the title of the video here: {yt_title}, \n the description here: {yt_description}, \n and the tags here: {yt_tags}. \nPLEASE ENSURE you are summarizing the correct video and not a random video\n The video duration is {yt_duration} so take that into account?"
+        prompt = f"Can you write a brief summary about this video URL: \n {url} (thats does not have closed captions provided) in approximately {summary_length} words. \n Please use the title of the video here: {yt_title}, \n the description here: {yt_description}, \n and the tags here: {yt_tags}. \nPLEASE ENSURE you are summarizing the correct video and not a random video\n The video duration is {yt_duration} so take that into account"
 
     print("Parsing API without captions due to long video OR not captions (or both)...")
     try: 
