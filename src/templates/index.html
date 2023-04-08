@@ -2,6 +2,12 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta property="og:title" content="YTRecap" />
+    <meta
+      property="og:description"
+      content="Generate any youtube video summary in seconds"
+    />
+    <meta property="og:image" content="https://ytrecap.org/static/recap.svg" />
     <title>YTRecap</title>
     <link rel="stylesheet" href="/../static/styles.css" />
     <link rel="preconnect" href="https://fonts.gstatic.com" />
@@ -31,15 +37,15 @@
     </div>
     <div class="header">
       <a href="/">
-        <h1 class="logo">
+        <h1 class="animate__animated animate__backInDown logo">
           YTRecap <img src="../static/recap.svg" alt="yt-logo" />
         </h1>
       </a>
     </div>
     <div class="loader" id="loader"></div>
     <form method="POST">
-      <div class="form-container animate__animated animate__fadeIn">
-        <div class="input-url-container">
+      <div class="form-container">
+        <div class="animate__animated animate__fadeIn logo input-url-container">
           <input
             type="text"
             name="url"
@@ -48,9 +54,19 @@
           />
         </div>
         <div class="select-button-container">
-          <button type="submit" class="summarize-button">Summarize</button>
+          <button
+            type="submit"
+            class="animate__animated animate__lightSpeedInLeft summarize-button"
+          >
+            Summarize
+          </button>
           <div class="select-container">
-            <select name="summary_length" type="number" required>
+            <select
+              class="animate__animated animate__lightSpeedInRight"
+              name="summary_length"
+              type="number"
+              required
+            >
               <option class="option_length" value="200">Short</option>
               <option class="option_length" value="500" selected>Medium</option>
               <option class="option_length" value="1000">Long</option>
