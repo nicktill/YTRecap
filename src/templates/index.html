@@ -1,16 +1,7 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- meta tags -->
-    <!-- Open Graph Meta Tags -->
-    <meta property="og:title" content="YTRecap" />
-    <meta
-      property="og:description"
-      content="Get a summary of any youtube video in seconds"
-    />
-    <meta property="og:image" content="https://ytrecap.org/static/recap.svg" />
-    <meta property="og:url" content="https://ytrecap.org" />
-    <meta property="og:type" content="website" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>YTRecap</title>
     <link rel="stylesheet" href="/../static/styles.css" />
     <link rel="preconnect" href="https://fonts.gstatic.com" />
@@ -24,73 +15,70 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css"
     />
-    <!-- add favicon youtube.png -->
     <link rel="icon" href="/../static/recap.svg" />
     <link
       href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap"
       rel="stylesheet"
     />
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
+    />
   </head>
   <body>
+    <div class="toggle-container">
+      <i id="dark-mode-toggle" class="fas fa-moon"></i>
+    </div>
     <div class="header">
-      <div class="toggle-container">
-        <i id="dark-mode-toggle" class="fas fa-moon"></i>
-      </div>
-      <h1 class="logo">
-        YTRecap
-        <img src="../static/recap.svg" alt="yt-logo" />
-      </h1>
+      <a href="/">
+        <h1 class="logo">
+          YTRecap <img src="../static/recap.svg" alt="yt-logo" />
+        </h1>
+      </a>
     </div>
     <div class="loader" id="loader"></div>
     <form method="POST">
-      <input
-        type="text"
-        name="url"
-        placeholder="Enter a YouTube URL"
-        autocomplete="off"
-      />
-      <div class="select-container">
-        <select
-          aria-placeholder="Summary Length"
-          className="summary_length"
-          name="summary_length"
-          type="number"
-          required
-        >
-          <option class="option_length" value="" disabled selected>
-            Length
-          </option>
-          <option class="option_length" value="200">Short</option>
-          <option class="option_length" value="500">Medium</option>
-          <option class="option_length" value="1000">Long</option>
-        </select>
+      <div class="form-container animate__animated animate__fadeIn">
+        <div class="input-url-container">
+          <input
+            type="text"
+            name="url"
+            placeholder="Enter a YouTube URL"
+            autocomplete="off"
+          />
+        </div>
+        <div class="select-button-container">
+          <button type="submit" class="summarize-button">Summarize</button>
+          <div class="select-container">
+            <select name="summary_length" type="number" required>
+              <option class="option_length" value="200">Short</option>
+              <option class="option_length" value="500" selected>Medium</option>
+              <option class="option_length" value="1000">Long</option>
+            </select>
+          </div>
+        </div>
       </div>
-      <input type="submit" value="Go" />
     </form>
-
     {% if video_info %}
-    <div class="video-container">
-      <div class="video-info">
-        <iframe
-          width="560"
-          height="315"
-          src="https://www.youtube.com/embed/{{ video_id }}"
-          frameborder="0"
-          allowfullscreen
-        ></iframe>
-        <h2>{{ video_info['title'] }}</h2>
-        <p>Author: {{ video_info['author'] }}</p>
-        <p>Published On: {{ video_info['date'] }}</p>
-        <p>Views: {{ video_info['view_count'] }}</p>
-      </div>
+    <div class="video-info animate__animated animate__jackInTheBox">
+      <iframe
+        src="https://www.youtube.com/embed/{{ video_id }}"
+        width="560"
+        height="315"
+        frameborder="0"
+        allowfullscreen
+      ></iframe>
+      <h2>{{ video_info['title'] }}</h2>
+      <p>Author: {{ video_info['author'] }}</p>
+      <p>Published On: {{ video_info['date'] }}</p>
+      <p>Views: {{ video_info['view_count'] }}</p>
     </div>
     {% endif %} {% if summary %}
-    <div class="summary-container">
+    <div class="summary-container animate__animated animate__jackInTheBox">
       <h2 class="summary-heading">Summary:</h2>
       <p class="summary-text">{{ summary }}</p>
       <div class="button-container"></div>
     </div>
-
     {% endif %} {% if error %}
     <p class="error">{{ error }}</p>
     {% endif %}
