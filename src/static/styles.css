@@ -190,6 +190,7 @@ select {
 
 .video-info iframe {
   max-width: 100%;
+  border-radius: 10px;
 }
 
 /* common styles */
