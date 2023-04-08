@@ -205,8 +205,8 @@ select {
   align-items: center;
   justify-content: center;
   background-color: rgba(255, 255, 255, 0.1);
-  color: #fff;
-  border: 2px solid #fff;
+  color: #e4e4e4;
+  border: 2px solid #e4e4e4;
   padding: 5px 12px;
   border-radius: 10px;
   font-size: 14px;
