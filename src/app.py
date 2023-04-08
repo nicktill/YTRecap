@@ -61,7 +61,7 @@ def parse_text_info(input_list):
 
 
 # Function to generate summary using OpenAI API
-def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title):
+def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes):
     # Set default length to 200 tokens
     # Set summary length to default value if user does not select a summary length
     try:
@@ -84,17 +84,17 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title):
 
     except openai.error.InvalidRequestError:
         # Return error message if summary cannot be generated
-        summaryNoCaptions = generateSummaryNoCaptions(summary_length, yt_url, yt_title)
+        summaryNoCaptions = generateSummaryNoCaptions(summary_length, yt_url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
         return summaryNoCaptions
 
 
 #  - This is a fallback function to generate a summary when no captions are provided by YouTube
 # - This function is called when the video is too long (causes character limit to openAI API, or there are no captions)
-def generateSummaryNoCaptions(summary_length, url, yt_title):
+def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes):
     if summary_length > 500: 
-        prompt = f"Can you write an very long in depth summary about this video {url} in approximately {summary_length} words. The title of the video is {yt_title}?"
+        prompt = f"Can you write an very long in depth summary about this video {url} (thats does not have closed captions provided) in approximately {summary_length} words. Please use the title of the video here: \n {yt_title}, \n the description here: \n {yt_description}, \n and the tags her: \n {yt_tags}. PLEAS ENSURE you are summarizing the correct video and not a random video?"
     else:
-        prompt = f"Can you write a summary about this video {url} in approximately {summary_length} words. The title of the video is {yt_title}?"
+        prompt = f"Can you write a summary about this video {url} (thats does not have closed captions provided) in approximately {summary_length} words. Please use the title of the video here {yt_title},\n  the description here {yt_description} \n and the tags her: \n {yt_tags}. \n PLEASE ENSURE you are summarizing the correct video and not a random video??"
 
     print("Parsing API without captions due to long video OR not captions (or both)...")
     try: 
@@ -108,10 +108,9 @@ def generateSummaryNoCaptions(summary_length, url, yt_title):
         )
     except: 
         # Return error message if summary cannot be generated
-        summary = "Uh oh! Sorry, we couldn't generate a summary for this video and this error was not handled. Please visit source-code: https://github.com/nicktill/YTRecap/issues and open a new issue if possibe."
+        summary = "Uh oh! Sorry, we couldn't generate a summary for this video and this error was not handled. Please visit source-code: https://github.com/nicktill/YTRecap/issues and open a new issue if possibe (it is likely due to the content of the yt video description)"
         return summary
     # Remove newlines and extra spaces from summary
-
     summary = response.choices[0].text.strip()
     return summary
 
@@ -134,7 +133,7 @@ def get_transcript(path):
         video_id = match.group(0)
         youtube = build('youtube', 'v3', developerKey=os.environ.get('YT_KEY'))
         video_response = youtube.videos().list(
-            part='snippet,statistics',
+            part='snippet,statistics, contentDetails',
             id=video_id
         ).execute()
         
@@ -145,13 +144,25 @@ def get_transcript(path):
             'date': format_date(video_response['items'][0]['snippet']['publishedAt']),
             'view_count': format_view_count(video_response['items'][0]['statistics']['viewCount']),
             'thumbnail': video_response['items'][0]['snippet']['thumbnails']['medium']['url'],
+            'description': video_response['items'][0]['snippet']['description'], # Add description
+            'tags': video_response['items'][0]['snippet'].get('tags', []), # Add tags
+            'duration': format_duration(video_response['items'][0]['contentDetails']['duration']), # Add duration
+            'likes': video_response['items'][0]['statistics'].get('likeCount', 0), # Add like count
+            'dislikes': video_response['items'][0]['statistics'].get('dislikeCount', 0), # Add dislike count
         }
+
     else:
         return render_template('index.html', error="Invalid YouTube URL")
     
-    # Get transcript and parse text
+    # store video info into vars
     yt_title = video_response['items'][0]['snippet']['title']
     summary_length = int(request.form['summary_length'])
+    yt_description = video_response['items'][0]['snippet']['description'].replace("\n", " ").strip()
+    yt_tags = video_response['items'][0]['snippet'].get('tags', [])
+    yt_duration = format_duration(video_response['items'][0]['contentDetails']['duration'])
+    yt_likes = video_response['items'][0]['statistics'].get('likeCount', 0)
+    yt_dislikes = video_response['items'][0]['statistics'].get('dislikeCount', 0)
+
     try: 
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
         captions = parse_text_info(transcript)
@@ -159,9 +170,9 @@ def get_transcript(path):
         captions = None
         
     if captions:
-        summary = generateSummaryWithCaptions(captions, summary_length, url, yt_title)
+        summary = generateSummaryWithCaptions(captions, summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
     else:
-        summary = generateSummaryNoCaptions(summary_length, url, yt_title)
+        summary = generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
 
     # Render the result in the template
     return render_template('index.html', video_info=video_info, summary=summary, video_id=video_id, summary_length=summary_length)
