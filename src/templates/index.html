@@ -76,7 +76,7 @@
       </div>
     </form>
     {% if video_info %}
-    <div class="video-info animate__animated animate__jackInTheBox">
+    <div class="video-info animate__animated animate__fadeInDown">
       <iframe
         src="https://www.youtube.com/embed/{{ video_id }}"
         width="560"
@@ -90,7 +90,7 @@
       <p>Views: {{ video_info['view_count'] }}</p>
     </div>
     {% endif %} {% if summary %}
-    <div class="summary-container animate__animated animate__jackInTheBox">
+    <div class="summary-container animate__animated animate__fadeInUp">
       <h2 class="summary-heading">Summary:</h2>
       <p class="summary-text">{{ summary }}</p>
       <div class="button-container"></div>
