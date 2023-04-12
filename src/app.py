@@ -65,7 +65,7 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
     # Set default length to 200 tokens
     # Set summary length to default value if user does not select a summary length
     try:
-        if summary_length == 300:
+        if summary_length >= 300:
             prompt = f"You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via url). Please provide a extremely long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title}"
         else:
             prompt = f"You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via url). Please provide a long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title}"
@@ -90,7 +90,7 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
 #  - This is a fallback function to generate a summary when no captions are provided by YouTube
 # - This function is called when the video is too long (causes character limit to openAI API, or there are no captions)
 def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes):
-    if summary_length == 300: 
+    if summary_length >= 300: 
         prompt = "You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via inputted url). Please provide a extremely long and comprehensive summary about this video \n\n URL: {url} \n\n Make sure summary length approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
     else:
         prompt = f"You are an AI assistant for YTRecap, a webapp that provides video summaries based on any inputted youtube URL. You must provide in depth proffesional written summaries encompassing a summary overview for of any video provided. Can you write a summary about this video {url} in approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
