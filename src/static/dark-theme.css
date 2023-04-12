@@ -26,3 +26,11 @@ input[type="submit"]:hover {
   color: #ece283;
   border-color: #ece283;
 }
+
+.toggle-container-lm {
+  background-color: #332f2f;
+}
+
+.toggle-container-info {
+  background-color: #9a6b6b;
+}

@@ -1,7 +1,7 @@
 # Import necessary libraries
 import os
 import openai
-from flask import Flask, render_template, request
+from flask import Flask, render_template, request, jsonify
 from youtube_transcript_api import YouTubeTranscriptApi, CouldNotRetrieveTranscript
 import re
 from googleapiclient.discovery import build
@@ -65,21 +65,24 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
     # Set default length to 200 tokens
     # Set summary length to default value if user does not select a summary length
     try:
-        if summary_length > 500:
-            prompt = f"You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via url). Please provide a extremely long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title}."
+        if summary_length >= 300:
+            message = f"Please provide a extremely long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title}"
         else:
-            prompt = f"You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via url). Please provide a long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title}."
+            message = f"Please provide a long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title}"
 
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=prompt,
-            max_tokens= 1500,
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via input url)"},
+                {"role": "user", "content": message}
+            ],
+            max_tokens=1500,
             n=1,
             stop=None,
             temperature=0.5,
         )
         # Remove newlines and extra spaces from summary
-        summary = response.choices[0].text.strip()
+        summary = response.choices[0].message.content.strip()
         return summary
 
     except openai.error.InvalidRequestError:
@@ -90,16 +93,19 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
 #  - This is a fallback function to generate a summary when no captions are provided by YouTube
 # - This function is called when the video is too long (causes character limit to openAI API, or there are no captions)
 def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes):
-    if summary_length > 500: 
-        prompt = "You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via inputted url). Please provide a extremely long and comprehensive summary about this video \n\n URL: {url} \n\n Make sure summary length approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
+    if summary_length >= 300: 
+        message = "Please provide a extremely long and in depth comprehensive summary about this video \n\n URL: {url} \n\n Please make sure summary length approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
     else:
-        prompt = f"You are an AI assistant for YTRecap, a webapp that provides video summaries based on any inputted youtube URL. You must provide in depth proffesional written summaries encompassing a summary overview for of any video provided. Can you write a summary about this video {url} in approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
+        message = f"Please provide an in depth summary about this video \n\n. URL: {url} \n\n Please make sure summary length approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
     print("Parsing API without captions due to long video OR not captions (or both)...")
     try: 
-        response = openai.Completion.create(
-            engine="text-davinci-003",
-            prompt=prompt,
-            max_tokens= 1500,
+      response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via input url)"},
+                {"role": "user", "content": message}
+            ],
+            max_tokens=1500,
             n=1,
             stop=None,
             temperature=0.5,
@@ -109,7 +115,7 @@ def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_
         summary = "Uh oh! Sorry, we couldn't generate a summary for this video and this error was not handled. Please visit source-code: https://github.com/nicktill/YTRecap/issues and open a new issue if possibe (it is likely due to the content of the yt video description being too long, exceeding the character limit of the OpenAI API).  "
         return summary
     # Remove newlines and extra spaces from summary
-    summary = response.choices[0].text.strip()
+    summary = response.choices[0].message.content.strip()
     return summary
 
 # Render index page
@@ -122,7 +128,6 @@ def index(path):
 @app.route('/', methods=['POST'], defaults={'path': ''})
 @app.route('/<path:path>', methods=['POST'])
 def get_transcript(path):
-    # Get video URL from user input
     url = request.form['url']
     # Extract video ID from URL using regex
     match = re.search(r"(?<=v=)[\w-]+|[\w-]+(?<=/v/)|(?<=youtu.be/)[\w-]+", url)
@@ -175,6 +180,60 @@ def get_transcript(path):
     # Render the result in the template
     return render_template('index.html', video_info=video_info, summary=summary, video_id=video_id, summary_length=summary_length)
 
+#Function to generate summary with newly updaed length (if user changes summary length)
+@app.route('/getNewLengthSummary', methods=['POST'])
+def getNewLengthSummary():
+    # Get the data from the request
+    url = request.form['url']
+    match = re.search(r"(?<=v=)[\w-]+|[\w-]+(?<=/v/)|(?<=youtu.be/)[\w-]+", url)
+    summary_length = int(request.form['summary_length'])
+    if match:
+        video_id = match.group(0)
+        youtube = build('youtube', 'v3', developerKey=os.environ.get('YT_KEY'))
+        video_response = youtube.videos().list(
+            part='snippet,statistics, contentDetails',
+            id=video_id
+        ).execute()
+        
+        # Extract video information
+        video_info = {
+            'title': video_response['items'][0]['snippet']['title'],
+            'author': video_response['items'][0]['snippet']['channelTitle'],
+            'date': format_date(video_response['items'][0]['snippet']['publishedAt']),
+            'view_count': format_view_count(video_response['items'][0]['statistics']['viewCount']),
+            'thumbnail': video_response['items'][0]['snippet']['thumbnails']['medium']['url'],
+            'description': video_response['items'][0]['snippet']['description'], # Add description
+            'tags': video_response['items'][0]['snippet'].get('tags', []), # Add tags
+            'duration': format_duration(video_response['items'][0]['contentDetails']['duration']), # Add duration
+            'likes': video_response['items'][0]['statistics'].get('likeCount', 0), # Add like count
+            'dislikes': video_response['items'][0]['statistics'].get('dislikeCount', 0), # Add dislike count
+        }
+
+    else:
+        return render_template('index.html', error="Invalid YouTube URL")
+    
+    # store video info into vars
+    yt_title = video_response['items'][0]['snippet']['title']
+    summary_length = int(request.form['summary_length'])
+    yt_description = video_response['items'][0]['snippet']['description'].replace("\n", " ").strip()
+    yt_tags = video_response['items'][0]['snippet'].get('tags', [])
+    yt_duration = format_duration(video_response['items'][0]['contentDetails']['duration'])
+    yt_likes = video_response['items'][0]['statistics'].get('likeCount', 0)
+    yt_dislikes = video_response['items'][0]['statistics'].get('dislikeCount', 0)
+
+    try: 
+        transcript = YouTubeTranscriptApi.get_transcript(video_id)
+        captions = parse_text_info(transcript)
+    except:
+        captions = None
+        
+    if captions:
+        summary = generateSummaryWithCaptions(captions, summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
+    else:
+        summary = generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
+
+    return jsonify(summary=summary)
+
 # Run Flask app
 if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 4200)))

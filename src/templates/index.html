@@ -44,15 +44,30 @@
     />
   </head>
   <body>
-    <div class="toggle-container">
-      <i id="dark-mode-toggle" class="fas fa-moon"></i>
+    <div class="icon-container">
+      <div
+        id="dark-mode-toggle"
+        class="toggle-container-lm animate__animated animate__fadeIn"
+      >
+        <i id="dark-mode-icon" class="fas fa-moon"></i>
+      </div>
+      <!-- info container to be added soon -->
+      <!-- <div
+        class="toggle-container-info animate__animated animate__fadeIn"
+        onClick="showInfo()"
+      >
+        <i class="fa fa-question-circle"></i> -->
+        <div class="info-container">
+          <p>This is some information.</p>
+        </div>
+      </div>
     </div>
     <div class="github-container">
       <a
         href="https://github.com/nicktill/ytrecap"
         target="_blank"
         rel="noopener noreferrer"
-        class="github-button"
+        class="github-button animate__animated animate__fadeIn"
       >
         <i class="fab fa-github"></i>
         Star on GitHub
@@ -86,13 +101,16 @@
           <div class="select-container">
             <select
               class="animate__animated animate__lightSpeedInRight"
+              id="first-length-select"
               name="summary_length"
               type="number"
               required
             >
+              <option class="option_length" value="100">Very Short</option>
               <option class="option_length" value="200">Short</option>
-              <option class="option_length" value="500" selected>Medium</option>
-              <option class="option_length" value="1000">Long</option>
+              <option class="option_length" value="300" selected>Medium</option>
+              <option class="option_length" value="400">Long</option>
+              <option class="option_length" value="500">Very Long</option>
             </select>
           </div>
         </div>
@@ -115,17 +133,47 @@
     {% endif %} {% if summary %}
     <div class="summary-container animate__animated animate__fadeInUp">
       <h2 class="summary-heading">Summary:</h2>
-      <p class="summary-text">{{ summary }}</p>
+      <form id="lengthForm" name="length-form">
+        <select
+          class="animate__animated animate__lightSpeedInRight"
+          id="second-length-select"
+          name="summary_length"
+          type="number"
+          required
+        >
+          <option class="option_length" value="300" selected>
+            Change Length Of Summary
+          </option>
+          <option class="option_length" value="100">Very Short</option>
+          <option class="option_length" value="200">Short</option>
+          <option class="option_length" value="300" >Medium</option>
+          <option class="option_length" value="400">Long</option>
+          <option class="option_length" value="500">Very Long</option>
+        </select>
+        <input
+          id="placeholder"
+          type="text"
+          name="url"
+          value="https://www.youtube.com/watch?v={{ video_id }}"
+        />
+      </form>
+      <div class="summary-wrapper">
+        <p class="summary-text">{% if summary %}{{ summary }}{% endif %}</p>
+        <div class="loader" id="summary-loader" style="display: none"></div>
+      </div>
       <div class="button-container"></div>
     </div>
     {% endif %} {% if error %}
     <p class="error">{{ error }}</p>
     {% endif %}
-    <!-- loading animation -->
+    <!-- session storage and loading animation -->
     <script>
       document
         .querySelector("form")
         .addEventListener("submit", function (event) {
+          // session storage for the selected length
+          const selectElement = document.getElementById("first-length-select");
+          sessionStorage.setItem("selectedLength", selectElement.value);
           // Show the loader
           document.getElementById("loader").style.display = "block";
         });
@@ -133,17 +181,23 @@
   </body>
   <script>
     const darkModeToggle = document.getElementById("dark-mode-toggle");
+    const darkModeIcon = document.getElementById("dark-mode-icon");
     const darkThemeStylesheet = document.getElementById("dark-theme");
+
     function enableDarkMode() {
       darkThemeStylesheet.disabled = false;
       localStorage.setItem("darkMode", "enabled");
       document.querySelector(".github-button").classList.add("dark-mode");
+      darkModeIcon.classList.remove("fa-moon");
+      darkModeIcon.classList.add("fa-sun");
     }
 
     function disableDarkMode() {
       darkThemeStylesheet.disabled = true;
       localStorage.setItem("darkMode", "disabled");
       document.querySelector(".github-button").classList.remove("dark-mode");
+      darkModeIcon.classList.remove("fa-sun");
+      darkModeIcon.classList.add("fa-moon");
     }
 
     function toggleDarkMode() {
@@ -162,6 +216,54 @@
       enableDarkMode();
     } else {
       disableDarkMode();
+    }
+
+    /* Make it shorter/longer feature */
+    document
+      .getElementById("second-length-select")
+      .addEventListener("change", function () {
+        event.preventDefault();
+        updateSummary();
+      });
+
+    async function updateSummary() {
+      const summaryTextElement = document.querySelector(".summary-text");
+      const summaryLoaderElement = document.getElementById("summary-loader");
+
+      // Hide the summary text and show the loader
+      summaryTextElement.style.display = "none";
+      summaryLoaderElement.style.display = "block";
+
+      // Get the selected summary length and the video URL
+      const summaryLength = document.getElementById(
+        "second-length-select"
+      ).value;
+      const videoUrl = document.getElementById("placeholder").value;
+
+      try {
+        // Make the AJAX request to the server (app.py)
+        const response = await fetch("/getNewLengthSummary", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body: new URLSearchParams({
+            url: videoUrl,
+            summary_length: summaryLength,
+          }),
+        });
+
+        const data = await response.json();
+
+        // Update the summary text with the new summary
+        summaryTextElement.textContent = data.summary;
+      } catch (error) {
+        console.error("Error:", error);
+      } finally {
+        // Hide the loader and show the summary text
+        summaryLoaderElement.style.display = "none";
+        summaryTextElement.style.display = "block";
+      }
     }
   </script>
 </html>
