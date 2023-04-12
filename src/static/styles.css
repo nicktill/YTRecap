@@ -273,3 +273,7 @@ select {
 }
 
 /* other styles */
+#placeholder {
+  display: none;
+}
+

@@ -86,13 +86,14 @@
           <div class="select-container">
             <select
               class="animate__animated animate__lightSpeedInRight"
+              id="first-length-select"
               name="summary_length"
               type="number"
               required
             >
-              <option class="option_length" value="200">Short</option>
-              <option class="option_length" value="500" selected>Medium</option>
-              <option class="option_length" value="1000">Long</option>
+              <option class="option_length" value="100">Short</option>
+              <option class="option_length" value="200" selected>Medium</option>
+              <option class="option_length" value="300">Long</option>
             </select>
           </div>
         </div>
@@ -115,17 +116,35 @@
     {% endif %} {% if summary %}
     <div class="summary-container animate__animated animate__fadeInUp">
       <h2 class="summary-heading">Summary:</h2>
+        <form id="lengthForm" name="length-form" method="POST">
+            <select
+              class="animate__animated animate__lightSpeedInRight"
+              id="second-length-select"
+              name="summary_length"
+              type="number"
+              onchange="submitForm()"
+              required
+            >
+              <option class="option_length" value="100">Short</option>
+              <option class="option_length" value="200" selected>Medium</option>
+              <option class="option_length" value="300">Long</option>
+            </select>
+            <input id="placeholder" type="text" name="url" value="https://www.youtube.com/watch?v={{ video_id }}">
+        </form>
       <p class="summary-text">{{ summary }}</p>
       <div class="button-container"></div>
     </div>
     {% endif %} {% if error %}
     <p class="error">{{ error }}</p>
     {% endif %}
-    <!-- loading animation -->
+    <!-- session storage and loading animation -->
     <script>
       document
         .querySelector("form")
         .addEventListener("submit", function (event) {
+          // session storage for the selected length
+          const selectElement = document.getElementById("first-length-select");
+          sessionStorage.setItem('selectedLength', selectElement.value);
           // Show the loader
           document.getElementById("loader").style.display = "block";
         });
@@ -162,6 +181,27 @@
       enableDarkMode();
     } else {
       disableDarkMode();
+    }
+
+    /* Make it shorter/longer feature */
+    // session storage for second-length-select element: applied to the select in the summary region
+    // both on first submission and later submissions
+    const selectElement = document.getElementById("second-length-select");
+    const selectedValue = sessionStorage.getItem('selectedLength');
+    if (selectedValue) {
+      // show the selected option
+      const selectionOption = document.querySelector(`#second-length-select option[value="${selectedValue}"]`);
+      selectionOption.selected = true;
+      const otherOptions = document.querySelectorAll('#second-length-select option:not([value="' + selectedValue + '"])');
+      otherOptions.forEach(option => {
+        option.selected = false;
+      });
+    }
+
+    function submitForm() {
+      const selectElement = document.getElementById("second-length-select");
+      sessionStorage.setItem('selectedLength', selectElement.value);
+      document.getElementById("lengthForm").submit();
     }
   </script>
 </html>
