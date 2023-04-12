@@ -44,8 +44,13 @@
     />
   </head>
   <body>
-    <div class="toggle-container">
-      <i id="dark-mode-toggle" class="fas fa-moon"></i>
+    <div class="icon-container">
+      <div id="dark-mode-toggle" class="toggle-container-lm">
+        <i id="dark-mode-icon" class="fas fa-moon"></i>
+      </div>
+      <div class="toggle-container-info">
+        <i class="fa fa-question-circle"></i>
+      </div>
     </div>
     <div class="github-container">
       <a
@@ -116,21 +121,26 @@
     {% endif %} {% if summary %}
     <div class="summary-container animate__animated animate__fadeInUp">
       <h2 class="summary-heading">Summary:</h2>
-        <form id="lengthForm" name="length-form" method="POST">
-            <select
-              class="animate__animated animate__lightSpeedInRight"
-              id="second-length-select"
-              name="summary_length"
-              type="number"
-              onchange="submitForm()"
-              required
-            >
-              <option class="option_length" value="100">Short</option>
-              <option class="option_length" value="200" selected>Medium</option>
-              <option class="option_length" value="300">Long</option>
-            </select>
-            <input id="placeholder" type="text" name="url" value="https://www.youtube.com/watch?v={{ video_id }}">
-        </form>
+      <form id="lengthForm" name="length-form" method="POST">
+        <select
+          class="animate__animated animate__lightSpeedInRight"
+          id="second-length-select"
+          name="summary_length"
+          type="number"
+          onchange="submitForm()"
+          required
+        >
+          <option class="option_length" value="100">Short</option>
+          <option class="option_length" value="200" selected>Medium</option>
+          <option class="option_length" value="300">Long</option>
+        </select>
+        <input
+          id="placeholder"
+          type="text"
+          name="url"
+          value="https://www.youtube.com/watch?v={{ video_id }}"
+        />
+      </form>
       <p class="summary-text">{{ summary }}</p>
       <div class="button-container"></div>
     </div>
@@ -144,7 +154,7 @@
         .addEventListener("submit", function (event) {
           // session storage for the selected length
           const selectElement = document.getElementById("first-length-select");
-          sessionStorage.setItem('selectedLength', selectElement.value);
+          sessionStorage.setItem("selectedLength", selectElement.value);
           // Show the loader
           document.getElementById("loader").style.display = "block";
         });
@@ -152,17 +162,23 @@
   </body>
   <script>
     const darkModeToggle = document.getElementById("dark-mode-toggle");
+    const darkModeIcon = document.getElementById("dark-mode-icon");
     const darkThemeStylesheet = document.getElementById("dark-theme");
+
     function enableDarkMode() {
       darkThemeStylesheet.disabled = false;
       localStorage.setItem("darkMode", "enabled");
       document.querySelector(".github-button").classList.add("dark-mode");
+      darkModeIcon.classList.remove("fa-moon");
+      darkModeIcon.classList.add("fa-sun");
     }
 
     function disableDarkMode() {
       darkThemeStylesheet.disabled = true;
       localStorage.setItem("darkMode", "disabled");
       document.querySelector(".github-button").classList.remove("dark-mode");
+      darkModeIcon.classList.remove("fa-sun");
+      darkModeIcon.classList.add("fa-moon");
     }
 
     function toggleDarkMode() {
@@ -187,20 +203,24 @@
     // session storage for second-length-select element: applied to the select in the summary region
     // both on first submission and later submissions
     const selectElement = document.getElementById("second-length-select");
-    const selectedValue = sessionStorage.getItem('selectedLength');
+    const selectedValue = sessionStorage.getItem("selectedLength");
     if (selectedValue) {
       // show the selected option
-      const selectionOption = document.querySelector(`#second-length-select option[value="${selectedValue}"]`);
+      const selectionOption = document.querySelector(
+        `#second-length-select option[value="${selectedValue}"]`
+      );
       selectionOption.selected = true;
-      const otherOptions = document.querySelectorAll('#second-length-select option:not([value="' + selectedValue + '"])');
-      otherOptions.forEach(option => {
+      const otherOptions = document.querySelectorAll(
+        '#second-length-select option:not([value="' + selectedValue + '"])'
+      );
+      otherOptions.forEach((option) => {
         option.selected = false;
       });
     }
 
     function submitForm() {
       const selectElement = document.getElementById("second-length-select");
-      sessionStorage.setItem('selectedLength', selectElement.value);
+      sessionStorage.setItem("selectedLength", selectElement.value);
       document.getElementById("lengthForm").submit();
     }
   </script>
