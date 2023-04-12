@@ -297,9 +297,6 @@ select {
     max-width: 100%;
   }
 
-  .select-container {
-    display: none;
-  }
   .github-button,
   .github-button:hover,
   .github-container {
