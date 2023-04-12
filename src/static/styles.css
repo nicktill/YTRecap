@@ -15,6 +15,24 @@ p {
   size: 24px;
   font-weight: 400;
 }
+
+.info-container {
+  display: none;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  transform: translateX(10px);
+}
+
+.info-container p {
+  margin: 0;
+}
+
 .header {
   display: flex;
   justify-content: center;
