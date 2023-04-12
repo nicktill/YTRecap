@@ -12,13 +12,36 @@ https://user-images.githubusercontent.com/57879193/230707034-093e8767-b339-495c-
 ### Getting Started
 To use the YT-Recap application, follow these steps:
 
-### Clone this repository to your local machine.
+1. **Clone the repository:**
+    ```
+    git clone https://github.com/nicktill/YTRecap.git
+    ```
 
-Install the dependencies by running npm install in the root directory of the project.
+2. **Set up virtual environment:**
+    ```
+    cd yt-recap
+    python3 -m venv venv
+    source venv/bin/activate (macOS/Linux)
+    venv\Scripts\activate (Windows)
+    ```
 
-Create a virtual environment and install the required Python packages by running pip install -r requirements.txt in the python directory of the project.
+3. **Install required packages:** 
+    ```
+    pip install -r requirements.txt
+    ```
 
-Navigte to the correct directory and run the following: 
-```
-python3 app.py
-```
+4. **Set up environment variables:**
+    Create a file named `.env` in the `/src` directory of the repo to store your YouTube API key and OpenAI API key. 
+    The structure should be as follows:
+    ```
+    YT_KEY='YOUR_YOUTUBE_API_KEY'
+    OPENAI_KEY='YOUR_OPENAI_API_KEY'
+    ```
+
+5. **Run the application:**
+    ```
+    cd src
+    python3 app.py
+    ```
+
+
