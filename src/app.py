@@ -1,7 +1,7 @@
 # Import necessary libraries
 import os
 import openai
-from flask import Flask, render_template, request, jsonify, jsonify
+from flask import Flask, render_template, request, jsonify
 from youtube_transcript_api import YouTubeTranscriptApi, CouldNotRetrieveTranscript
 import re
 from googleapiclient.discovery import build

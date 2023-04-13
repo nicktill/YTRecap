@@ -140,12 +140,12 @@
           type="number"
           required
         >
-          <option class="option_length" selected disabled>
+          <option class="option_length" value="300" selected>
             Change Length Of Summary
           </option>
           <option class="option_length" value="100">Very Short</option>
           <option class="option_length" value="200">Short</option>
-          <option class="option_length" value="300">Medium</option>
+          <option class="option_length" value="300" >Medium</option>
           <option class="option_length" value="400">Long</option>
           <option class="option_length" value="500">Very Long</option>
         </select>
@@ -214,11 +214,6 @@
     }
 
     /* Make it shorter/longer feature */
-    document
-      .getElementById("second-length-select")
-      .addEventListener("change", function () {
-        event.preventDefault();
-        updateSummary();
     document
       .getElementById("second-length-select")
       .addEventListener("change", function () {
