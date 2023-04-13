@@ -61,14 +61,14 @@ def parse_text_info(input_list):
 
 
 # Function to generate summary using OpenAI API
-def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes):
+def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_description, yt_author):
     # Set default length to 200 tokens
     # Set summary length to default value if user does not select a summary length
     try:
         if summary_length >= 300:
-            message = f"Please provide a extremely long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title}"
+            message = f"Please provide a extremely long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title} from the channel: {yt_author}"
         else:
-            message = f"Please provide a long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title}"
+            message = f"Please provide a long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title} from the channel: {yt_author}"
 
         response = openai.ChatCompletion.create(
             model="gpt-3.5-turbo",
@@ -87,16 +87,16 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
 
     except openai.error.InvalidRequestError:
         # Return error message if summary cannot be generated
-        summaryNoCaptions = generateSummaryNoCaptions(summary_length, yt_url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
+        summaryNoCaptions = generateSummaryNoCaptions(summary_length, yt_url, yt_title, yt_description, yt_author)
         return summaryNoCaptions
 
 #  - This is a fallback function to generate a summary when no captions are provided by YouTube
 # - This function is called when the video is too long (causes character limit to openAI API, or there are no captions)
-def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes):
+def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_author):
     if summary_length >= 300: 
-        message = "Please provide a extremely long and in depth comprehensive summary about this video \n\n URL: {url} \n\n Please make sure summary length approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
+        message = f"Please provide a extremely long and in depth comprehensive summary about this video \n\n URL: {url} \n\n Please make sure summary length is approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n the channel name here {yt_author} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
     else:
-        message = f"Please provide an in depth summary about this video \n\n. URL: {url} \n\n Please make sure summary length approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
+        message = f"Please provide an in depth summary about this video \n\n. URL: {url} \n\n Please make sure summary length is approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n the channel name here \n\n {yt_author} and the descripton here: \n\n {yt_description} to provide a summary overview of the video"
     print("Parsing API without captions due to long video OR not captions (or both)...")
     try: 
       response = openai.ChatCompletion.create(
@@ -158,13 +158,14 @@ def get_transcript(path):
         return render_template('index.html', error="Invalid YouTube URL")
     
     # store video info into vars
+    yt_author = video_response['items'][0]['snippet']['channelTitle']
     yt_title = video_response['items'][0]['snippet']['title']
     summary_length = int(request.form['summary_length'])
     yt_description = video_response['items'][0]['snippet']['description'].replace("\n", " ").strip()
-    yt_tags = video_response['items'][0]['snippet'].get('tags', [])
-    yt_duration = format_duration(video_response['items'][0]['contentDetails']['duration'])
-    yt_likes = video_response['items'][0]['statistics'].get('likeCount', 0)
-    yt_dislikes = video_response['items'][0]['statistics'].get('dislikeCount', 0)
+    # yt_tags = video_response['items'][0]['snippet'].get('tags', [])
+    # yt_duration = format_duration(video_response['items'][0]['contentDetails']['duration'])
+    # yt_likes = video_response['items'][0]['statistics'].get('likeCount', 0)
+    # yt_dislikes = video_response['items'][0]['statistics'].get('dislikeCount', 0)
 
     try: 
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
@@ -173,9 +174,9 @@ def get_transcript(path):
         captions = None
         
     if captions:
-        summary = generateSummaryWithCaptions(captions, summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
+        summary = generateSummaryWithCaptions(captions, summary_length, url, yt_title, yt_description, yt_author)
     else:
-        summary = generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
+        summary = generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_author)
 
     # Render the result in the template
     return render_template('index.html', video_info=video_info, summary=summary, video_id=video_id, summary_length=summary_length)
@@ -213,13 +214,14 @@ def getNewLengthSummary():
         return render_template('index.html', error="Invalid YouTube URL")
     
     # store video info into vars
+    yt_author = video_response['items'][0]['snippet']['channelTitle']
     yt_title = video_response['items'][0]['snippet']['title']
     summary_length = int(request.form['summary_length'])
     yt_description = video_response['items'][0]['snippet']['description'].replace("\n", " ").strip()
-    yt_tags = video_response['items'][0]['snippet'].get('tags', [])
-    yt_duration = format_duration(video_response['items'][0]['contentDetails']['duration'])
-    yt_likes = video_response['items'][0]['statistics'].get('likeCount', 0)
-    yt_dislikes = video_response['items'][0]['statistics'].get('dislikeCount', 0)
+    # yt_tags = video_response['items'][0]['snippet'].get('tags', [])
+    # yt_duration = format_duration(video_response['items'][0]['contentDetails']['duration'])
+    # yt_likes = video_response['items'][0]['statistics'].get('likeCount', 0)
+    # yt_dislikes = video_response['items'][0]['statistics'].get('dislikeCount', 0)
 
     try: 
         transcript = YouTubeTranscriptApi.get_transcript(video_id)
@@ -228,9 +230,9 @@ def getNewLengthSummary():
         captions = None
         
     if captions:
-        summary = generateSummaryWithCaptions(captions, summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
+        summary = generateSummaryWithCaptions(captions, summary_length, url, yt_title, yt_description, yt_author)
     else:
-        summary = generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_tags, yt_duration, yt_likes, yt_dislikes)
+        summary = generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_author)
 
     return jsonify(summary=summary)
 
