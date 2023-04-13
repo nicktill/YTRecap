@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body {
+        width: 300px;
+        height: 150px;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+      }
+      select {
+        width: 100%;
+      }
+      .wrapper {
+        border-radius: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrapper">
+      <h4>Select summary length:</h4>
+      <select id="summary-length">
+        <option value="100">Very Short</option>
+        <option value="200">Short</option>
+        <option value="300" selected>Medium</option>
+        <option value="400">Long</option>
+        <option value="500">Very Long</option>
+      </select>
+      <button id="summarize-btn">Summarize</button>
+      <script src="popup.js"></script>
+    </div>
+  </body>
+</html>
