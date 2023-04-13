@@ -44,15 +44,30 @@
     />
   </head>
   <body>
-    <div class="toggle-container">
-      <i id="dark-mode-toggle" class="fas fa-moon"></i>
+    <div class="icon-container">
+      <div
+        id="dark-mode-toggle"
+        class="toggle-container-lm animate__animated animate__fadeIn"
+      >
+        <i id="dark-mode-icon" class="fas fa-moon"></i>
+      </div>
+      <!-- info container to be added soon -->
+      <!-- <div
+        class="toggle-container-info animate__animated animate__fadeIn"
+        onClick="showInfo()"
+      >
+        <i class="fa fa-question-circle"></i> -->
+        <div class="info-container">
+          <p>This is some information.</p>
+        </div>
+      </div>
     </div>
     <div class="github-container">
       <a
         href="https://github.com/nicktill/ytrecap"
         target="_blank"
         rel="noopener noreferrer"
-        class="github-button"
+        class="github-button animate__animated animate__fadeIn"
       >
         <i class="fab fa-github"></i>
         Star on GitHub
@@ -161,17 +176,23 @@
   </body>
   <script>
     const darkModeToggle = document.getElementById("dark-mode-toggle");
+    const darkModeIcon = document.getElementById("dark-mode-icon");
     const darkThemeStylesheet = document.getElementById("dark-theme");
+
     function enableDarkMode() {
       darkThemeStylesheet.disabled = false;
       localStorage.setItem("darkMode", "enabled");
       document.querySelector(".github-button").classList.add("dark-mode");
+      darkModeIcon.classList.remove("fa-moon");
+      darkModeIcon.classList.add("fa-sun");
     }
 
     function disableDarkMode() {
       darkThemeStylesheet.disabled = true;
       localStorage.setItem("darkMode", "disabled");
       document.querySelector(".github-button").classList.remove("dark-mode");
+      darkModeIcon.classList.remove("fa-sun");
+      darkModeIcon.classList.add("fa-moon");
     }
 
     function toggleDarkMode() {
@@ -193,6 +214,11 @@
     }
 
     /* Make it shorter/longer feature */
+    document
+      .getElementById("second-length-select")
+      .addEventListener("change", function () {
+        event.preventDefault();
+        updateSummary();
     document
       .getElementById("second-length-select")
       .addEventListener("change", function () {
@@ -237,7 +263,7 @@
         // Hide the loader and show the summary text
         summaryLoaderElement.style.display = "none";
         summaryTextElement.style.display = "block";
+      }
     }
-  }
   </script>
 </html>

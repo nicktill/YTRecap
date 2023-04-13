@@ -15,6 +15,24 @@ p {
   size: 24px;
   font-weight: 400;
 }
+
+.info-container {
+  display: none;
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+  z-index: 9999;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  transform: translateX(10px);
+}
+
+.info-container p {
+  margin: 0;
+}
+
 .header {
   display: flex;
   justify-content: center;
@@ -22,12 +40,36 @@ p {
   flex-wrap: wrap;
 }
 
-.toggle-container {
+.icon-container {
   position: absolute;
-  left: 10px;
-  top: 10px;
+  padding: 1rem;
+  margin: auto;
+  display: flex;
+  flex-direction: row;
+  z-index: 10;
+}
+
+.toggle-container-info {
+  width: 25px;
+  text-align: center;
   font-size: 18px;
+  padding: 0.5rem;
+  margin: 0.2rem;
   cursor: pointer;
+  background-color: #ff9393;
+  border-radius: 5px;
+  color: white;
+}
+
+.toggle-container-lm {
+  width: 25px;
+  text-align: center;
+  font-size: 18px;
+  padding: 0.5rem;
+  margin: 0.2rem;
+  cursor: pointer;
+  background-color: #ededed;
+  border-radius: 5px;
 }
 
 .logo {
@@ -242,13 +284,6 @@ select {
     flex-direction: column;
   }
 
-  .toggle-container {
-    position: absolute;
-    margin-top: 10px;
-    align-items: right;
-    display: flex;
-  }
-
   .logo {
     margin-top: 10px;
   }
@@ -276,4 +311,3 @@ select {
 #placeholder {
   display: none;
 }
-
