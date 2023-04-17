@@ -116,12 +116,12 @@ p {
 .summarize-button {
   background-color: #ff0000;
   border: none;
-  border-radius: 30px;
+  border-radius: 22.5px;
   color: #fff;
   cursor: pointer;
   font-size: 16px;
   font-weight: 400;
-  padding: 15px 30px;
+  padding: 12.5px 25px;
   transition: all 0.3s ease;
 }
 
@@ -307,4 +307,18 @@ select {
 /* other styles */
 #placeholder {
   display: none;
+}
+
+.custom-select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23000000" width="18" height="18"><path d="M7 10l5 5 5-5z"/></svg>');
+  background-repeat: no-repeat;
+  background-position: right 1em center;
+  padding-right: 2em;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  outline: solid 0.5px #ccc;
 }
