@@ -1,61 +1,36 @@
-document.getElementById("summarize-btn").addEventListener("click", async () => {
-  const summaryLength = document.getElementById("summary-length").value;
+document.addEventListener("DOMContentLoaded", function () {
+  const summarizeBtn = document.getElementById("summarize-btn");
+  const summaryLengthSelect = document.getElementById("summary-length");
 
-  chrome.tabs.query({ active: true, currentWindow: true }, async (tabs) => {
-    console.log("Active tab queried:", tabs);
-    try {
-      const response = await new Promise((resolve) => {
-        chrome.tabs.sendMessage(tabs[0].id, { action: "getVideoUrl" }, resolve);
-      });
+  summarizeBtn.addEventListener("click", function () {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+      const activeTab = tabs[0];
+      const videoUrl = activeTab.url;
+      const summaryLength = summaryLengthSelect.value;
 
-      console.log("Response received in popup.js:", response);
-      if (response && response.url) {
-        const videoUrl = response.url;
-
-        // Send the video URL and summary length to the external app
-        const appResponse = await fetch(
-          `https://ytrecap.org?videoUrl=${encodeURIComponent(
-            videoUrl
-          )}&summaryLength=${summaryLength}`
-        );
-        const summary = await appResponse.text();
-
-        // Display the received summary on the YouTube page
-        chrome.scripting.executeScript(
-          {
-            target: { tabId: tabs[0].id },
-            func: (summary) => {
-              const summaryHtml = `
-                    <div id="ytrecap-summary-container" style="position: fixed; bottom: 0; left: 0; right: 0; z-index: 99999; background-color: white; padding: 20px; border-top: 1px solid black; font-size: 16px;">
-                      <h2>Summary</h2>
-                      <p>${summary}</p>
-                      <button id="ytrecap-close-btn" style="position: absolute; top: 10px; right: 10px;">Close</button>
-                    </div>`;
-              document.body.insertAdjacentHTML("beforeend", summaryHtml);
-            },
-            args: [summary],
-          },
-          () => {
-            // Close the summary when the close button is clicked
-            chrome.scripting.executeScript({
-              target: { tabId: tabs[0].id },
-              func: () => {
-                document
-                  .getElementById("ytrecap-close-btn")
-                  .addEventListener("click", () => {
-                    document
-                      .getElementById("ytrecap-summary-container")
-                      .remove();
-                  });
-              },
-            });
+      fetch("https://ytrecap.com/getNewLengthSummary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/x-www-form-urlencoded;charset=UTF-8",
+        },
+        body: `url=${encodeURIComponent(
+          videoUrl
+        )}&summary_length=${encodeURIComponent(summaryLength)}`,
+      })
+        .then((response) => {
+          if (response.ok) {
+            return response.json();
+          } else {
+            throw new Error("Network response was not ok");
           }
-        );
-      } else {
-        console.log("Video URL not found");
-      }
-    } catch (error) {
-      console.error("Error in popup.js:", error);
-    }
+        })
+        .then((data) => {
+          const summary = data.summary;
+          alert("Summary: " + summary);
+        })
+        .catch((error) => {
+          console.error("There was a problem with the fetch operation:", error);
+        });
+    });
   });
 });

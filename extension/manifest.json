@@ -16,7 +16,7 @@
     "48": "icon.png",
     "128": "icon.png"
   },
-  "permissions": ["activeTab", "tabs", "scripting"],
+  "permissions": ["https://ytrecap.org/"],
   "content_scripts": [
     {
       "matches": ["https://www.youtube.com/watch*"],
