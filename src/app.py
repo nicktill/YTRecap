@@ -8,9 +8,13 @@ from googleapiclient.discovery import build
 import datetime
 import isodate
 from dotenv import load_dotenv
+from flask_cors import CORS
+
+
 
 # Initialize Flask app and load environment variables
 app = Flask(__name__)
+CORS(app, origins=["https://ytrecap.org"])
 load_dotenv()
 
 # Set OpenAI API key
