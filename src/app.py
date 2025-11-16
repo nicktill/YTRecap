@@ -1,6 +1,8 @@
 # Import necessary libraries
 import os
 import openai
+import litellm
+from litellm import completion
 from flask import Flask, render_template, request, jsonify
 from youtube_transcript_api import YouTubeTranscriptApi, CouldNotRetrieveTranscript
 import re
@@ -14,7 +16,8 @@ app = Flask(__name__)
 load_dotenv()
 
 # Set OpenAI API key
-openai.api_key = os.environ.get('OPENAI_KEY')
+litellm.api_key = os.environ.get('OPENAI_KEY')
+
 
 # Function to format duration string into a human-readable format
 def format_duration(duration_string):
@@ -70,7 +73,8 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
         else:
             message = f"Please provide a long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title} from the channel: {yt_author}"
 
-        response = openai.ChatCompletion.create(
+        # use llama2, claude, palm, HF models, cohere
+        response = completion(
             model="gpt-3.5-turbo",
             messages=[
                 {"role": "system", "content": "You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via input url)"},
@@ -82,7 +86,7 @@ def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_d
             temperature=0.5,
         )
         # Remove newlines and extra spaces from summary
-        summary = response.choices[0].message.content.strip()
+        summary = response['choices'][0]['message']['content'].strip()
         return summary
 
     except openai.error.InvalidRequestError:
