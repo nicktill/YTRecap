@@ -4,9 +4,17 @@
 
 The console dashboard for that project shows App Engine traffic and about $2/month in
 charges. ytrecap.org points at Google's hosting addresses (216.239.3x.21 /
-2001:4860:4802:3x::15), which is how App Engine custom domains work. The same project most
-likely also holds the **YouTube Data API key** (`YT_KEY`). That key is free to use, so it's
-worth keeping.
+2001:4860:4802:3x::15), which is how App Engine custom domains work.
+
+The same project also owns two things to keep:
+
+- **The domain itself.** ytrecap.org was bought through **Google Cloud Domains** (Squarespace
+  is the registrar of record, with Google Cloud Domains as the reseller). Its DNS is most
+  likely a **Cloud DNS** zone in this project. The yearly renewal (every March) bills to
+  this project's billing account.
+- **The YouTube Data API key** (`YT_KEY`), which is free to use.
+
+**Do not shut down this project** unless you've transferred the domain out first.
 
 ## Moving everything to Vercel (free)
 
@@ -21,8 +29,9 @@ this repo, with Root Directory `src`.
 3. **Try it** at `ytrecap-nicktills-projects.vercel.app`.
 4. **Attach the domain.** Go to ytrecap → Settings → Domains and add `ytrecap.org` and
    `www.ytrecap.org`. Vercel shows the exact DNS records it wants.
-5. **Point DNS at Vercel.** At the registrar (wherever ytrecap.org is registered; if it was
-   bought through Google Domains, it now lives at Squarespace Domains):
+5. **Point DNS at Vercel.** In Google Cloud console, open **Cloud Domains → ytrecap.org**
+   and check its DNS setting. If it says Cloud DNS, open **Network services → Cloud DNS**,
+   select the ytrecap.org zone, and edit the records there:
    - delete the old Google **A** records (216.239.32.21, .34.21, .36.21, .38.21)
    - delete the old Google **AAAA** records (2001:4860:4802:32/34/36/38::15). Leftover AAAA
      records keep sending IPv6 visitors to Google.
@@ -36,9 +45,13 @@ this repo, with Root Directory `src`.
      charges)
    - Cloud Storage → delete the `*.appspot.com` / `staging.*` buckets, and delete old images
      under Artifact Registry / Container Registry (this stops the storage charges)
-   - Keep the project itself if `YT_KEY` lives there. Otherwise **IAM & Admin → Settings →
-     Shut down** removes everything (recoverable for 30 days).
-   - Check Billing a few days later to confirm charges have stopped.
+   - Keep the project itself, because it holds the domain and `YT_KEY`.
+   - Check Billing a few days later. What's left should be the Cloud DNS zone (about
+     $0.20/month) and the yearly domain renewal.
+7. **Optional: move the domain to Vercel too.** In Cloud Domains, unlock ytrecap.org and get
+   its transfer (auth) code, then transfer it in on Vercel (Domains → Transfer In; this
+   includes a paid year of renewal). Vercel then handles DNS, and the Google project can be
+   shut down entirely.
 
 ## Option B: stay on Cloud Run (without Zeet)
 
