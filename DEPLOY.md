@@ -28,30 +28,32 @@ this repo, with Root Directory `src`.
    deploys to production automatically.
 3. **Try it** at `ytrecap-nicktills-projects.vercel.app`.
 4. **Attach the domain.** Go to ytrecap → Settings → Domains and add `ytrecap.org` and
-   `www.ytrecap.org`. Vercel shows the exact DNS records it wants.
-5. **Point DNS at Vercel.** In Google Cloud console, open **Cloud Domains → ytrecap.org**
-   and check its DNS setting. If it says Cloud DNS, open **Network services → Cloud DNS**,
-   select the ytrecap.org zone, and edit the records there:
-   - delete the old Google **A** records (216.239.32.21, .34.21, .36.21, .38.21)
-   - delete the old Google **AAAA** records (2001:4860:4802:32/34/36/38::15). Leftover AAAA
-     records keep sending IPv6 visitors to Google.
-   - add the records Vercel showed you, typically an A record `@ → 76.76.21.21` and a
-     CNAME `www → cname.vercel-dns.com`
+   `www.ytrecap.org`. Vercel offers the "Vercel nameservers" option
+   (`ns1.vercel-dns.com`, `ns2.vercel-dns.com`); use that.
+5. **Hand DNS to Vercel.** The domain's DNS currently runs on the retired Google Domains DNS
+   (the console warns "Google Domains DNS settings that are no longer supported"), so it
+   has to move anyway. In Google Cloud console, open **Cloud Domains → ytrecap.org → DNS
+   details**:
+   - If **DNSSEC** is on, turn it off first and wait for it to clear (up to 24–48 hours).
+     Switching nameservers while DNSSEC is on can take the domain offline.
+   - Note any MX (email) or other records you still need. You'd recreate those in Vercel.
+   - Choose **custom name servers** and enter `ns1.vercel-dns.com` and
+     `ns2.vercel-dns.com`.
 
-   Vercel issues HTTPS automatically once DNS resolves, usually within minutes (up to a
-   few hours).
+   Vercel verifies the domain, creates the records for the site and issues HTTPS. This
+   usually takes minutes, occasionally a few hours.
 6. **Turn off Google hosting** once ytrecap.org shows the new site:
    - App Engine → Settings → **Disable application** (this stops serving and instance
      charges)
    - Cloud Storage → delete the `*.appspot.com` / `staging.*` buckets, and delete old images
      under Artifact Registry / Container Registry (this stops the storage charges)
    - Keep the project itself, because it holds the domain and `YT_KEY`.
-   - Check Billing a few days later. What's left should be the Cloud DNS zone (about
-     $0.20/month) and the yearly domain renewal.
+   - Check Billing a few days later. The only remaining charge should be the yearly
+     domain renewal each March.
 7. **Optional: move the domain to Vercel too.** In Cloud Domains, unlock ytrecap.org and get
    its transfer (auth) code, then transfer it in on Vercel (Domains → Transfer In; this
-   includes a paid year of renewal). Vercel then handles DNS, and the Google project can be
-   shut down entirely.
+   includes a paid year of renewal). After that, the Google project can be shut down
+   entirely.
 
 ## Option B: stay on Cloud Run (without Zeet)
 
