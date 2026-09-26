@@ -1,48 +1,44 @@
 # Deploying YTRecap
 
-## How it's deployed today (as far as we can tell)
+## Today: Google Cloud project `yt-recap-376803` (YT-Recap)
 
-There is no deployment config in this repo's history (no Dockerfile, `app.yaml`, or
-Procfile), so the setup lived outside the repo. The clues:
+The console dashboard for that project shows App Engine traffic and about $2/month in
+charges. ytrecap.org points at Google's hosting addresses (216.239.3x.21 /
+2001:4860:4802:3x::15), which is how App Engine custom domains work. The same project most
+likely also holds the **YouTube Data API key** (`YT_KEY`). That key is free to use, so it's
+worth keeping.
 
-- `ytrecap.org` resolves to `2001:4860:4802:32/34/36/38::15`. Those are Google's
-  `ghs.googlehosted.com` addresses, which Google uses for **Cloud Run domain mappings**
-  (and App Engine / Firebase custom domains).
-- `app.py` reads `$PORT`, which is the Cloud Run convention.
-- Zeet worked by building your repo and deploying it into *your own* GCP project on
-  Cloud Run.
+## Moving everything to Vercel (free)
 
-So most likely: **Zeet built the app and deployed it to Cloud Run in your GCP project,
-with ytrecap.org mapped to that service.** To confirm, open
-[console.cloud.google.com/run](https://console.cloud.google.com/run) (or run
-`gcloud run services list` and `gcloud beta run domain-mappings list --region <region>`).
+The Vercel project `ytrecap` (team *nicktill's projects*) is already created and linked to
+this repo, with Root Directory `src`.
 
-### Where the ~$3/month probably comes from
+1. **Add secrets in Vercel.** Go to ytrecap → Settings → Environment Variables and add
+   `OPENAI_KEY` (or `GEMINI_API_KEY`) plus `YT_KEY` (copy it from Google Cloud → APIs &
+   Services → Credentials). Then redeploy.
+2. **Ship the code.** Merge `redesign` into `main`. From then on, every push to `main`
+   deploys to production automatically.
+3. **Try it** at `ytrecap-nicktills-projects.vercel.app`.
+4. **Attach the domain.** Go to ytrecap → Settings → Domains and add `ytrecap.org` and
+   `www.ytrecap.org`. Vercel shows the exact DNS records it wants.
+5. **Point DNS at Vercel.** At the registrar (wherever ytrecap.org is registered; if it was
+   bought through Google Domains, it now lives at Squarespace Domains):
+   - delete the old Google **A** records (216.239.32.21, .34.21, .36.21, .38.21)
+   - delete the old Google **AAAA** records (2001:4860:4802:32/34/36/38::15). Leftover AAAA
+     records keep sending IPv6 visitors to Google.
+   - add the records Vercel showed you, typically an A record `@ → 76.76.21.21` and a
+     CNAME `www → cname.vercel-dns.com`
 
-Cloud Run's free tier (2M requests and 180k vCPU-seconds a month) almost certainly covers
-the traffic. Check **Billing → Reports, grouped by SKU**. The usual suspects:
-
-- **Artifact Registry / Container Registry storage**: every Zeet build pushed an image,
-  and old images add up past the 0.5 GB free tier.
-- **Cloud Build** minutes, or **a minimum instance** set above 0.
-- If the charge is from Zeet itself or your domain registrar, it won't show up in GCP at all.
-
-## Option A (recommended, free): Vercel Hobby
-
-You already use Vercel for other projects. The Hobby plan is free for personal,
-non-commercial projects and runs Flask natively (`src/vercel.json` sets a 60s max
-duration for streaming).
-
-1. Vercel → **Add New… → Project** → import `nicktill/YTRecap`.
-2. Set **Root Directory** to `src`. The framework is detected as Flask from `app.py`.
-3. Under **Environment Variables**, add `GEMINI_API_KEY` (and optionally `YT_KEY`). Deploy, then test the `*.vercel.app` URL.
-4. **Settings → Domains** → add `ytrecap.org` and `www.ytrecap.org`. Vercel shows the
-   DNS records to set at your registrar; replace the old Google records with them.
-5. Once the new site is live on the domain, shut down the old one in GCP: delete the Cloud
-   Run service, its domain mapping, and the old images in Artifact/Container Registry.
-   That's what stops the bill.
-
-After that, every push to `main` redeploys automatically.
+   Vercel issues HTTPS automatically once DNS resolves, usually within minutes (up to a
+   few hours).
+6. **Turn off Google hosting** once ytrecap.org shows the new site:
+   - App Engine → Settings → **Disable application** (this stops serving and instance
+     charges)
+   - Cloud Storage → delete the `*.appspot.com` / `staging.*` buckets, and delete old images
+     under Artifact Registry / Container Registry (this stops the storage charges)
+   - Keep the project itself if `YT_KEY` lives there. Otherwise **IAM & Admin → Settings →
+     Shut down** removes everything (recoverable for 30 days).
+   - Check Billing a few days later to confirm charges have stopped.
 
 ## Option B: stay on Cloud Run (without Zeet)
 
