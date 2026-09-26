@@ -1,269 +1,197 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>YTRecap — Summarize any YouTube video</title>
+    <meta name="description" content="Paste a YouTube link and get a clear AI summary with key takeaways and clickable chapters in seconds." />
+    <meta name="theme-color" content="#fbfaf8" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b0b0c" media="(prefers-color-scheme: dark)" />
     <meta property="og:title" content="YTRecap" />
-    <meta
-      property="og:description"
-      content="Generate a summary of any YouTube video in seconds"
-    />
-    <meta
-      property="og:image"
-      content="https://user-images.githubusercontent.com/57879193/230733719-47c4d135-61c9-415b-8115-f1902c4cc64c.png"
-    />
-    <meta
-      name="twitter:image"
-      content="https://user-images.githubusercontent.com/57879193/230733719-47c4d135-61c9-415b-8115-f1902c4cc64c.png"
-    />
-    <title>YTRecap</title>
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/brands.min.css"
-    />
-
-    <link rel="stylesheet" href="/../static/styles.css" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" />
-    <link
-      rel="stylesheet"
-      href="../static/dark-theme.css"
-      id="dark-theme"
-      disabled
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.1.0/css/all.min.css"
-    />
-    <link rel="icon" href="/../static/recap.svg" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500&display=swap"
-      rel="stylesheet"
-    />
-    <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
-    />
-  </head>
-  <body>
-    <div class="icon-container">
-      <div
-        id="dark-mode-toggle"
-        class="toggle-container-lm animate__animated animate__fadeIn"
-      >
-        <i id="dark-mode-icon" class="fas fa-moon"></i>
-      </div>
-      <!-- info container to be added soon -->
-      <!-- <div
-        class="toggle-container-info animate__animated animate__fadeIn"
-        onClick="showInfo()"
-      >
-        <i class="fa fa-question-circle"></i> -->
-        <div class="info-container">
-          <p>YTRecap summarizes any youtube video in seconds using AI. Pick a video, input the youtueb URL, and specify the length to summarize the video.</p>
-        </div>
-      </div>
-    </div>
-    <div class="github-container">
-      <a
-        href="https://github.com/nicktill/ytrecap"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="github-button animate__animated animate__fadeIn"
-      >
-        <i class="fab fa-github"></i>
-        Star on GitHub
-      </a>
-    </div>
-    <div class="header">
-      <a href="/">
-        <h1 class="animate__animated animate__backInDown logo">
-          YTRecap <img src="../static/recap.svg" alt="yt-logo" />
-        </h1>
-      </a>
-    </div>
-    <div class="loader" id="loader"></div>
-    <form method="POST">
-      <div class="form-container">
-        <div class="animate__animated animate__fadeIn logo input-url-container">
-          <input
-            type="text"
-            name="url"
-            placeholder="Enter a YouTube URL"
-            autocomplete="off"
-          />
-        </div>
-        <div class="select-button-container">
-          <button
-            type="submit"
-            class="animate__animated animate__lightSpeedInLeft summarize-button"
-          >
-            Summarize
-          </button>
-          <div class="select-container">
-            <select
-            class="animate__animated animate__lightSpeedInRight custom-select custom-select-dark"
-            id="first-length-select"
-              name="summary_length"
-              type="number"
-              required
-            >
-              <option class="option_length" value="100">Very Short</option>
-              <option class="option_length" value="200">Short</option>
-              <option class="option_length" value="300" selected>Medium</option>
-              <option class="option_length" value="400">Long</option>
-              <option class="option_length" value="500">Very Long</option>
-            </select>
-          </div>
-        </div>
-      </div>
-    </form>
-    {% if video_info %}
-    <div class="video-info animate__animated animate__fadeInDown">
-      <iframe
-        src="https://www.youtube.com/embed/{{ video_id }}"
-        width="560"
-        height="315"
-        frameborder="0"
-        allowfullscreen
-      ></iframe>
-      <h2>{{ video_info['title'] }}</h2>
-      <p>Author: {{ video_info['author'] }}</p>
-      <p>Published On: {{ video_info['date'] }}</p>
-      <p>Views: {{ video_info['view_count'] }}</p>
-    </div>
-    {% endif %} {% if summary %}
-    <div class="summary-container animate__animated animate__fadeInUp">
-      <h2 class="summary-heading">Summary:</h2>
-      <form id="lengthForm" name="length-form">
-        <select
-          class="animate__animated animate__lightSpeedInRight custom-select custom-select-dark"
-          id="second-length-select"
-          name="summary_length"
-          type="number"
-          required
-        >
-          <option class="option_length" value="300" selected>
-            Change Length Of Summary
-          </option>
-          <option class="option_length" value="100">Very Short</option>
-          <option class="option_length" value="200">Short</option>
-          <option class="option_length" value="300" >Medium</option>
-          <option class="option_length" value="400">Long</option>
-          <option class="option_length" value="500">Very Long</option>
-        </select>
-        <input
-          id="placeholder"
-          type="text"
-          name="url"
-          value="https://www.youtube.com/watch?v={{ video_id }}"
-        />
-      </form>
-      <div class="summary-wrapper">
-        <p class="summary-text">{% if summary %}{{ summary }}{% endif %}</p>
-        <div class="loader" id="summary-loader" style="display: none"></div>
-      </div>
-      <div class="button-container"></div>
-    </div>
-    {% endif %} {% if error %}
-    <p class="error">{{ error }}</p>
-    {% endif %}
-    <!-- session storage and loading animation -->
+    <meta property="og:description" content="Summarize any YouTube video in seconds." />
+    <meta property="og:image" content="https://user-images.githubusercontent.com/57879193/230733719-47c4d135-61c9-415b-8115-f1902c4cc64c.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:image" content="https://user-images.githubusercontent.com/57879193/230733719-47c4d135-61c9-415b-8115-f1902c4cc64c.png" />
+    <link rel="icon" href="{{ url_for('static', filename='logo.svg') }}" type="image/svg+xml" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&family=Geist+Mono:wght@500&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='app.css') }}" />
     <script>
-      document
-        .querySelector("form")
-        .addEventListener("submit", function (event) {
-          // session storage for the selected length
-          const selectElement = document.getElementById("first-length-select");
-          sessionStorage.setItem("selectedLength", selectElement.value);
-          // Show the loader
-          document.getElementById("loader").style.display = "block";
-        });
-    </script>
-  </body>
-  <script>
-    const darkModeToggle = document.getElementById("dark-mode-toggle");
-    const darkModeIcon = document.getElementById("dark-mode-icon");
-    const darkThemeStylesheet = document.getElementById("dark-theme");
-
-    function enableDarkMode() {
-      darkThemeStylesheet.disabled = false;
-      localStorage.setItem("darkMode", "enabled");
-      document.querySelector(".github-button").classList.add("dark-mode");
-      darkModeIcon.classList.remove("fa-moon");
-      darkModeIcon.classList.add("fa-sun");
-    }
-
-    function disableDarkMode() {
-      darkThemeStylesheet.disabled = true;
-      localStorage.setItem("darkMode", "disabled");
-      document.querySelector(".github-button").classList.remove("dark-mode");
-      darkModeIcon.classList.remove("fa-sun");
-      darkModeIcon.classList.add("fa-moon");
-    }
-
-    function toggleDarkMode() {
-      if (darkThemeStylesheet.disabled) {
-        enableDarkMode();
-      } else {
-        disableDarkMode();
-      }
-    }
-
-    darkModeToggle.addEventListener("click", toggleDarkMode);
-
-    // Initialize the user's theme preference
-    const darkModeSetting = localStorage.getItem("darkMode");
-    if (darkModeSetting === "enabled") {
-      enableDarkMode();
-    } else {
-      disableDarkMode();
-    }
-
-    /* Make it shorter/longer feature */
-    document
-      .getElementById("second-length-select")
-      .addEventListener("change", function () {
-        event.preventDefault();
-        updateSummary();
-      });
-
-    async function updateSummary() {
-      const summaryTextElement = document.querySelector(".summary-text");
-      const summaryLoaderElement = document.getElementById("summary-loader");
-
-      // Hide the summary text and show the loader
-      summaryTextElement.style.display = "none";
-      summaryLoaderElement.style.display = "block";
-
-      // Get the selected summary length and the video URL
-      const summaryLength = document.getElementById(
-        "second-length-select"
-      ).value;
-      const videoUrl = document.getElementById("placeholder").value;
-
+      // Apply the saved theme before first paint to avoid a flash.
       try {
-        // Make the AJAX request to the server (app.py)
-        const response = await fetch("/getNewLengthSummary", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/x-www-form-urlencoded",
-          },
-          body: new URLSearchParams({
-            url: videoUrl,
-            summary_length: summaryLength,
-          }),
-        });
+        const t = localStorage.getItem("ytrecap:theme");
+        if (t) document.documentElement.dataset.theme = t;
+      } catch (e) {}
+    </script>
+  </head>
+  <body data-initial-id="{{ initial_id }}">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6" /></symbol>
+        <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 14a4 4 0 0 0 5.66 0l3-3a4 4 0 0 0-5.66-5.66l-1 1" /><path d="M14 10a4 4 0 0 0-5.66 0l-3 3a4 4 0 0 0 5.66 5.66l1-1" /></symbol>
+        <symbol id="i-clipboard" viewBox="0 0 24 24"><rect x="8" y="3" width="8" height="4" rx="1" /><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2" /></symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="11" height="11" rx="2" /><path d="M5 15V6a2 2 0 0 1 2-2h8" /></symbol>
+        <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5" /></symbol>
+        <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14" /></symbol>
+        <symbol id="i-share" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5" /><path d="M5 12v7a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-7" /></symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4" /><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4" /></symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4 8 8 0 1 0 20 14.5z" /></symbol>
+        <symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" /></symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 11a8 8 0 0 0-14.3-4.9L4 8M4 4v4h4M4 13a8 8 0 0 0 14.3 4.9L20 16M20 20v-4h-4" /></symbol>
+        <symbol id="i-alert" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 8v4.5M12 16h.01" /></symbol>
+        <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18" /></symbol>
+        <symbol id="i-github" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M12 2a10 10 0 0 0-3.16 19.49c.5.09.68-.22.68-.48v-1.7c-2.78.6-3.37-1.34-3.37-1.34-.45-1.16-1.11-1.47-1.11-1.47-.91-.62.07-.6.07-.6 1 .07 1.53 1.03 1.53 1.03.9 1.52 2.34 1.08 2.91.83.09-.65.35-1.09.63-1.34-2.22-.25-4.55-1.11-4.55-4.94 0-1.09.39-1.98 1.03-2.68-.1-.25-.45-1.27.1-2.64 0 0 .84-.27 2.75 1.02a9.5 9.5 0 0 1 5 0c1.91-1.29 2.75-1.02 2.75-1.02.55 1.37.2 2.39.1 2.64.64.7 1.03 1.59 1.03 2.68 0 3.84-2.34 4.68-4.57 4.93.36.31.68.92.68 1.85v2.74c0 .27.18.58.69.48A10 10 0 0 0 12 2z" /></symbol>
+        <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z" /></symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></symbol>
+        <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></symbol>
+        <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></symbol>
+      </defs>
+    </svg>
 
-        const data = await response.json();
+    <div class="backdrop" aria-hidden="true"></div>
 
-        // Update the summary text with the new summary
-        summaryTextElement.textContent = data.summary;
-      } catch (error) {
-        console.error("Error:", error);
-      } finally {
-        // Hide the loader and show the summary text
-        summaryLoaderElement.style.display = "none";
-        summaryTextElement.style.display = "block";
-      }
-    }
-  </script>
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="YTRecap home">
+        <img src="{{ url_for('static', filename='logo.svg') }}" alt="" width="28" height="28" />
+        <span>YTRecap</span>
+      </a>
+      <nav class="topbar-actions">
+        {% if demo %}<span class="demo-pill" title="No OpenAI key configured, so a sample summary is shown">Demo mode</span>{% endif %}
+        <a class="icon-btn" href="https://github.com/nicktill/ytrecap" target="_blank" rel="noopener" aria-label="View source on GitHub">
+          <svg><use href="#i-github" /></svg>
+        </a>
+        <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle dark mode">
+          <svg class="only-light"><use href="#i-moon" /></svg>
+          <svg class="only-dark"><use href="#i-sun" /></svg>
+        </button>
+      </nav>
+    </header>
+
+    <main class="shell">
+      <section class="hero" id="hero">
+        <p class="eyebrow intro" style="--d: 0.05s"><span class="dot"></span>AI summaries for YouTube</p>
+        <h1>
+          <span class="line"><span class="word" style="--d: 0.15s">Watch</span> <span class="word" style="--d: 0.25s">less.</span></span>
+          <em class="line"><span class="word" style="--d: 0.4s">Understand</span> <span class="word" style="--d: 0.52s">more.</span></em>
+        </h1>
+        <p class="lede intro" style="--d: 0.7s">Paste any YouTube link and get the key ideas, a clear summary, and clickable chapters in seconds.</p>
+      </section>
+
+      <form class="composer intro" id="composer" style="--d: 0.82s" autocomplete="off" novalidate>
+        <div class="composer-field">
+          <svg class="yt-glyph" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4.5" fill="currentColor" /><path d="M10 9.2v5.6l4.8-2.8z" fill="var(--surface)" /></svg>
+          <label class="sr-only" for="url">YouTube video URL</label>
+          <input id="url" name="url" type="url" inputmode="url" placeholder="Paste a YouTube link…" spellcheck="false" />
+          <button class="ghost-btn paste-btn" id="paste-btn" type="button" hidden>
+            <svg><use href="#i-clipboard" /></svg><span>Paste</span>
+          </button>
+          <button class="primary-btn" id="submit-btn" type="submit">
+            <span class="btn-label">Summarize</span><svg><use href="#i-arrow" /></svg><i class="btn-spinner" aria-hidden="true"></i>
+          </button>
+        </div>
+        <div class="composer-meta">
+          <div class="segmented" role="radiogroup" aria-label="Summary length" data-length-group>
+            <button type="button" role="radio" data-length="brief">Brief</button>
+            <button type="button" role="radio" data-length="standard">Standard</button>
+            <button type="button" role="radio" data-length="detailed">Detailed</button>
+          </div>
+          <p class="hint"><kbd>/</kbd> to focus · or swap <b>youtube.com</b> for <b>ytrecap.org</b> in any link</p>
+        </div>
+        <p class="form-error" id="form-error" role="alert" hidden></p>
+      </form>
+
+      <section class="examples intro" id="examples" style="--d: 0.95s">
+        <span class="examples-label">Try an example</span>
+        <button class="chip" type="button" data-example="UF8uR6Z6KLc">Steve Jobs at Stanford</button>
+        <button class="chip" type="button" data-example="iG9CE55wbtY">Schools &amp; creativity</button>
+        <button class="chip" type="button" data-example="aircAruvnKk">Neural networks, explained</button>
+      </section>
+
+      <section class="recent" id="recent" hidden>
+        <div class="recent-head">
+          <h2 class="section-label">Recently summarized</h2>
+          <button class="text-btn" id="clear-history" type="button">Clear</button>
+        </div>
+        <div class="recent-list" id="recent-list"></div>
+      </section>
+
+
+      <section class="result" id="result" hidden aria-live="polite">
+        <aside class="video-card">
+          <div class="player" id="player">
+            <img id="thumb" alt="" />
+            <button class="play-btn" id="play-btn" type="button" aria-label="Play video">
+              <svg><use href="#i-play" /></svg>
+            </button>
+          </div>
+          <div class="video-body">
+            <h2 class="video-title" id="video-title"><span class="skeleton" style="width: 90%"></span><span class="skeleton" style="width: 60%"></span></h2>
+            <p class="video-channel" id="video-channel"></p>
+            <div class="video-stats" id="video-stats"></div>
+            <div class="video-foot">
+              <span class="source-badge" id="source-badge" hidden></span>
+              <a class="text-link" id="yt-link" target="_blank" rel="noopener">Open on YouTube<svg><use href="#i-external" /></svg></a>
+            </div>
+          </div>
+        </aside>
+
+        <article class="summary-card">
+          <header class="summary-head">
+            <div class="segmented segmented-sm" role="radiogroup" aria-label="Summary length" data-length-group>
+              <button type="button" role="radio" data-length="brief">Brief</button>
+              <button type="button" role="radio" data-length="standard">Standard</button>
+              <button type="button" role="radio" data-length="detailed">Detailed</button>
+            </div>
+            <div class="summary-actions">
+              <button class="icon-btn" id="copy-btn" type="button" aria-label="Copy summary" data-tip="Copy"><svg><use href="#i-copy" /></svg></button>
+              <button class="icon-btn" id="download-btn" type="button" aria-label="Download as Markdown" data-tip="Download"><svg><use href="#i-download" /></svg></button>
+              <button class="icon-btn" id="share-btn" type="button" aria-label="Copy share link" data-tip="Share"><svg><use href="#i-share" /></svg></button>
+            </div>
+          </header>
+
+          <div class="progress-wrap" id="progress">
+            <ol class="progress">
+              <li data-step="video">Fetching video details</li>
+              <li data-step="transcript">Reading the transcript</li>
+              <li data-step="writing">Writing your summary</li>
+            </ol>
+            <div class="skeleton-block" aria-hidden="true">
+              <span class="skeleton" style="width: 34%"></span>
+              <span class="skeleton" style="width: 96%"></span>
+              <span class="skeleton" style="width: 88%"></span>
+              <span class="skeleton" style="width: 62%"></span>
+            </div>
+          </div>
+
+          <div class="summary" id="summary"></div>
+
+          <footer class="summary-foot" id="summary-foot" hidden>
+            <p class="foot-stats" id="foot-stats"></p>
+            <p class="foot-note">AI-generated, so double-check anything important.</p>
+            <button class="ghost-btn" id="regen-btn" type="button"><svg><use href="#i-refresh" /></svg>Regenerate</button>
+          </footer>
+
+          <div class="error-panel" id="error-panel" hidden>
+            <svg><use href="#i-alert" /></svg>
+            <div>
+              <p class="error-title">Couldn't summarize this video</p>
+              <p class="error-msg" id="error-msg"></p>
+            </div>
+            <button class="ghost-btn" id="retry-btn" type="button"><svg><use href="#i-refresh" /></svg>Try again</button>
+          </div>
+        </article>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span>Built by <a href="https://github.com/nicktill" target="_blank" rel="noopener">Nick Tillmann</a></span>
+      <span class="sep">·</span>
+      <a href="https://github.com/nicktill/ytrecap" target="_blank" rel="noopener">Open source</a>
+    </footer>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"><svg><use href="#i-check" /></svg><span></span></div>
+
+    <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+  </body>
 </html>

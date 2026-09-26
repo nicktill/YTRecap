@@ -13,38 +13,19 @@ YTRecap (https://ytrecap.org) is a web application that uses the YouTube Data AP
 https://user-images.githubusercontent.com/57879193/230707034-093e8767-b339-495c-b039-1bf87d34e784.mov
 
 ### Getting Started
-To use the YT-Recap application, follow these steps:
 
-1. **Clone the repository:**
-    ```
-    git clone https://github.com/nicktill/YTRecap.git
-    ```
+```bash
+git clone https://github.com/nicktill/YTRecap.git
+cd YTRecap/src
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env   # add a free GEMINI_API_KEY (or an OPENAI_KEY)
+python3 app.py         # http://localhost:5050
+```
 
-2. **Set up virtual environment:**
-    ```
-    cd yt-recap
-    python3 -m venv venv
-    source venv/bin/activate (macOS/Linux)
-    venv\Scripts\activate (Windows)
-    ```
+Without an AI key, the app runs in **demo mode** and streams a sample summary, so you can
+work on the UI without any API keys. Set `YTRECAP_DEMO=1` to force demo mode.
 
-3. **Install required packages:** 
-    ```
-    pip install -r requirements.txt
-    ```
+Share links work by swapping the domain: `ytrecap.org/watch?v=VIDEO_ID`.
 
-4. **Set up environment variables:**
-    Create a file named `.env` in the `/src` directory of the repo to store your YouTube API key and OpenAI API key. 
-    The structure should be as follows:
-    ```
-    YT_KEY='YOUR_YOUTUBE_API_KEY'
-    OPENAI_KEY='YOUR_OPENAI_API_KEY'
-    ```
-
-5. **Run the application:**
-    ```
-    cd src
-    python3 app.py
-    ```
-
-
+See [DEPLOY.md](DEPLOY.md) for hosting and cost notes.
