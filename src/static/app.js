@@ -29,6 +29,8 @@
     recent: $("#recent"),
     recentList: $("#recent-list"),
     toast: $("#toast"),
+    foot: $("#summary-foot"),
+    footStats: $("#foot-stats"),
   };
 
   // --- storage (per-viewer conveniences only; the app works without it) ---
@@ -361,7 +363,26 @@
     els.summary.classList.remove("streaming");
   }
 
-  async function summarize(videoId) {
+  function durationMinutes(duration) {
+    if (!duration) return null;
+    const secs = toSeconds(duration);
+    return Number.isFinite(secs) ? Math.max(1, Math.round(secs / 60)) : null;
+  }
+
+  function renderFooter() {
+    const words = state.markdown.split(/\s+/).filter(Boolean).length;
+    const readMin = Math.max(1, Math.round(words / 230));
+    const videoMin = durationMinutes(state.video?.duration);
+    let text = `<b>${readMin} min</b> read`;
+    if (videoMin) {
+      text += ` · ${videoMin} min video`;
+      if (videoMin > readMin) text += ` · saves ~${videoMin - readMin} min`;
+    }
+    els.footStats.innerHTML = text;
+    els.foot.hidden = false;
+  }
+
+  async function summarize(videoId, { fresh = false } = {}) {
     state.controller?.abort();
     const controller = (state.controller = new AbortController());
 
@@ -376,7 +397,9 @@
     els.progress.hidden = false;
     els.summary.innerHTML = "";
     els.summary.classList.add("streaming");
+    els.foot.hidden = true;
     els.submit.disabled = true;
+    els.submit.classList.add("loading");
     setActionsEnabled(false);
     setStep("video");
     if (isNewVideo) resetVideoCard(videoId);
@@ -388,7 +411,7 @@
       const res = await fetch("/api/summarize", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: videoId, length: state.length }),
+        body: JSON.stringify({ url: videoId, length: state.length, fresh }),
         signal: controller.signal,
       });
       if (!res.ok) {
@@ -424,12 +447,16 @@
       if (!finished) throw new Error("The connection was interrupted. Please try again.");
       els.summary.classList.remove("streaming");
       renderSummary();
+      renderFooter();
       setActionsEnabled(true);
     } catch (err) {
       if (err.name === "AbortError") return;
       showError(err.message || "Something went wrong. Please try again.");
     } finally {
-      if (state.controller === controller) els.submit.disabled = false;
+      if (state.controller === controller) {
+        els.submit.disabled = false;
+        els.submit.classList.remove("loading");
+      }
     }
   }
 
@@ -475,6 +502,19 @@
   }
 
   $("#retry-btn").addEventListener("click", () => state.videoId && summarize(state.videoId));
+  $("#regen-btn").addEventListener("click", () => state.videoId && summarize(state.videoId, { fresh: true }));
+
+  $("#examples").addEventListener("click", (e) => {
+    const chip = e.target.closest("[data-example]");
+    if (!chip) return;
+    els.input.value = `https://www.youtube.com/watch?v=${chip.dataset.example}`;
+    summarize(chip.dataset.example);
+  });
+
+  $("#clear-history").addEventListener("click", () => {
+    store.set("history", []);
+    renderHistory();
+  });
 
   // --- actions ---
   function exportMarkdown() {

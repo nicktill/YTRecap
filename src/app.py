@@ -9,20 +9,29 @@ import isodate
 import requests
 from dotenv import load_dotenv
 from flask import Flask, Response, jsonify, render_template, request, stream_with_context
-from openai import OpenAI
+from openai import OpenAI, RateLimitError
 from youtube_transcript_api import YouTubeTranscriptApi
 
 load_dotenv()
 
 app = Flask(__name__)
 
-OPENAI_KEY = os.environ.get("OPENAI_KEY") or os.environ.get("OPENAI_API_KEY")
-OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+# AI provider. A free Gemini key (aistudio.google.com) takes priority; otherwise
+# any OpenAI-compatible key works (OPENAI_BASE_URL can point it elsewhere).
+GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
+if GEMINI_KEY:
+    AI_KEY = GEMINI_KEY
+    AI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+    AI_MODEL = os.environ.get("AI_MODEL", "gemini-flash-latest")
+else:
+    AI_KEY = os.environ.get("OPENAI_KEY") or os.environ.get("OPENAI_API_KEY")
+    AI_BASE_URL = os.environ.get("OPENAI_BASE_URL")
+    AI_MODEL = os.environ.get("AI_MODEL") or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 YT_KEY = os.environ.get("YT_KEY")
 # Demo mode streams a canned summary so the UI can be previewed without API keys.
-DEMO_MODE = os.environ.get("YTRECAP_DEMO") == "1" or not OPENAI_KEY
+DEMO_MODE = os.environ.get("YTRECAP_DEMO") == "1" or not AI_KEY
 
-client = OpenAI(api_key=OPENAI_KEY) if OPENAI_KEY else None
+client = OpenAI(api_key=AI_KEY, base_url=AI_BASE_URL) if AI_KEY else None
 
 # Roughly 30k tokens of transcript; longer videos are sampled evenly to fit.
 MAX_TRANSCRIPT_CHARS = 120_000
@@ -235,7 +244,7 @@ def event(kind, **data):
     return json.dumps({"type": kind, **data}) + "\n"
 
 
-def summarize_stream(video_id, length):
+def summarize_stream(video_id, length, fresh=False):
     if DEMO_MODE:
         yield from demo_stream(length)
         return
@@ -252,7 +261,7 @@ def summarize_stream(video_id, length):
         return
 
     yield event("status", step="transcript")
-    cached = cache_get((video_id, length))
+    cached = None if fresh else cache_get((video_id, length))
     transcript = None if cached else fetch_transcript(video_id)
     source = cached["source"] if cached else ("transcript" if transcript else "description")
     video_public = {k: v for k, v in video.items() if k != "description"}
@@ -266,7 +275,7 @@ def summarize_stream(video_id, length):
     yield event("status", step="writing")
     try:
         stream = client.chat.completions.create(
-            model=OPENAI_MODEL,
+            model=AI_MODEL,
             temperature=0.4,
             stream=True,
             messages=[
@@ -279,6 +288,9 @@ def summarize_stream(video_id, length):
             if chunk.choices and chunk.choices[0].delta.content:
                 parts.append(chunk.choices[0].delta.content)
                 yield event("delta", text=chunk.choices[0].delta.content)
+    except RateLimitError:
+        yield event("error", message="YTRecap is a bit busy right now. Please try again in a minute.")
+        return
     except Exception:
         app.logger.exception("Summary generation failed")
         yield event("error", message="Something went wrong while writing the summary. Please try again.")
@@ -307,7 +319,7 @@ def api_summarize():
     if length not in LENGTHS:
         length = "standard"
     return Response(
-        stream_with_context(summarize_stream(video_id, length)),
+        stream_with_context(summarize_stream(video_id, length, bool(payload.get("fresh")))),
         mimetype="application/x-ndjson",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
@@ -379,4 +391,6 @@ def demo_stream(length):  # noqa: ARG001 - the sample is the same at every lengt
 
 
 if __name__ == "__main__":
+    mode = "demo mode (no AI key set)" if DEMO_MODE else f"model {AI_MODEL}"
+    print(f"YTRecap running on http://localhost:{os.environ.get('PORT', 5000)} using {mode}")
     app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))

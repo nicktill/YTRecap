@@ -84,7 +84,7 @@
             <svg><use href="#i-clipboard" /></svg><span>Paste</span>
           </button>
           <button class="primary-btn" id="submit-btn" type="submit">
-            <span>Summarize</span><svg><use href="#i-arrow" /></svg>
+            <span class="btn-label">Summarize</span><svg><use href="#i-arrow" /></svg><i class="btn-spinner" aria-hidden="true"></i>
           </button>
         </div>
         <div class="composer-meta">
@@ -98,8 +98,18 @@
         <p class="form-error" id="form-error" role="alert" hidden></p>
       </form>
 
+      <section class="examples" id="examples">
+        <span class="examples-label">Try an example</span>
+        <button class="chip" type="button" data-example="UF8uR6Z6KLc">Steve Jobs at Stanford</button>
+        <button class="chip" type="button" data-example="iG9CE55wbtY">Schools &amp; creativity</button>
+        <button class="chip" type="button" data-example="aircAruvnKk">Neural networks, explained</button>
+      </section>
+
       <section class="recent" id="recent" hidden>
-        <h2 class="section-label">Recently summarized</h2>
+        <div class="recent-head">
+          <h2 class="section-label">Recently summarized</h2>
+          <button class="text-btn" id="clear-history" type="button">Clear</button>
+        </div>
         <div class="recent-list" id="recent-list"></div>
       </section>
 
@@ -154,13 +164,27 @@
             </div>
           </header>
 
-          <ol class="progress" id="progress">
-            <li data-step="video">Fetching video details</li>
-            <li data-step="transcript">Reading the transcript</li>
-            <li data-step="writing">Writing your summary</li>
-          </ol>
+          <div class="progress-wrap" id="progress">
+            <ol class="progress">
+              <li data-step="video">Fetching video details</li>
+              <li data-step="transcript">Reading the transcript</li>
+              <li data-step="writing">Writing your summary</li>
+            </ol>
+            <div class="skeleton-block" aria-hidden="true">
+              <span class="skeleton" style="width: 34%"></span>
+              <span class="skeleton" style="width: 96%"></span>
+              <span class="skeleton" style="width: 88%"></span>
+              <span class="skeleton" style="width: 62%"></span>
+            </div>
+          </div>
 
           <div class="summary" id="summary"></div>
+
+          <footer class="summary-foot" id="summary-foot" hidden>
+            <p class="foot-stats" id="foot-stats"></p>
+            <p class="foot-note">AI-generated, so double-check anything important.</p>
+            <button class="ghost-btn" id="regen-btn" type="button"><svg><use href="#i-refresh" /></svg>Regenerate</button>
+          </footer>
 
           <div class="error-panel" id="error-panel" hidden>
             <svg><use href="#i-alert" /></svg>

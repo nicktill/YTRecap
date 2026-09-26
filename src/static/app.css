@@ -199,7 +199,7 @@ svg {
   justify-content: space-between;
   gap: 12px;
   padding: 14px clamp(16px, 4vw, 32px);
-  background: color-mix(in srgb, var(--bg) 72%, transparent);
+  background: color-mix(in srgb, var(--bg) 86%, transparent);
   -webkit-backdrop-filter: saturate(1.6) blur(14px);
   backdrop-filter: saturate(1.6) blur(14px);
   border-bottom: 1px solid transparent;
@@ -1422,4 +1422,158 @@ body.has-result .composer-meta {
     grid-column: 1 / -1;
     justify-self: start;
   }
+}
+
+/* ==========================================================================
+   Polish: examples, loading button, skeleton, summary footer
+   ========================================================================== */
+.examples {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  max-width: 680px;
+  margin: 28px auto 0;
+  animation: rise 0.7s 0.12s var(--ease) both;
+}
+
+.examples-label {
+  margin-right: 4px;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.chip {
+  height: 32px;
+  padding: 0 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 0.15s, color 0.15s, background-color 0.15s, transform 0.15s var(--ease);
+}
+
+.chip:hover {
+  border-color: var(--accent-line);
+  background: var(--accent-soft);
+  color: var(--text);
+  transform: translateY(-1px);
+}
+
+body.has-result .examples {
+  display: none;
+}
+
+.recent-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.text-btn {
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.text-btn:hover {
+  color: var(--accent);
+}
+
+.recent-item img {
+  background:
+    radial-gradient(circle at 30% 20%, var(--accent-soft), transparent 60%),
+    var(--surface-3);
+}
+
+/* Submit button loading state */
+.primary-btn {
+  position: relative;
+}
+
+.btn-spinner {
+  display: none;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.4);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.primary-btn.loading svg {
+  display: none;
+}
+
+.primary-btn.loading .btn-spinner {
+  display: inline-block;
+}
+
+/* Skeleton shown under the progress steps */
+.skeleton-block {
+  padding: 18px clamp(20px, 4vw, 40px) 32px;
+}
+
+.skeleton-block .skeleton {
+  height: 12px;
+  margin: 12px 0;
+}
+
+.skeleton-block .skeleton:first-child {
+  height: 10px;
+  margin-bottom: 18px;
+}
+
+/* Footer under a finished summary */
+.summary-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+  margin: 0 clamp(20px, 4vw, 40px) 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+  animation: fade-in 0.4s var(--ease) both;
+}
+
+.foot-stats {
+  flex: 1;
+  margin: 0;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.foot-stats b {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.foot-note {
+  flex-basis: 100%;
+  order: 3;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12.5px;
+}
+
+.summary-foot .ghost-btn {
+  height: 32px;
+  font-size: 13px;
+}
+
+@media (max-width: 640px) {
+  .examples-label {
+    width: 100%;
+    margin: 0;
+    text-align: center;
+  }
+
 }

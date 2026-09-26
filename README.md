@@ -19,11 +19,11 @@ git clone https://github.com/nicktill/YTRecap.git
 cd YTRecap/src
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env   # add OPENAI_KEY (and optionally YT_KEY)
+cp .env.example .env   # add a free GEMINI_API_KEY (or an OPENAI_KEY)
 python3 app.py         # http://localhost:5000
 ```
 
-Without an `OPENAI_KEY`, the app runs in **demo mode** and streams a sample summary, so you can
+Without an AI key, the app runs in **demo mode** and streams a sample summary, so you can
 work on the UI without any API keys. Set `YTRECAP_DEMO=1` to force demo mode.
 
 Share links work by swapping the domain: `ytrecap.org/watch?v=VIDEO_ID`.

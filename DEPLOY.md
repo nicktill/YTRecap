@@ -35,8 +35,7 @@ duration for streaming).
 
 1. Vercel → **Add New… → Project** → import `nicktill/YTRecap`.
 2. Set **Root Directory** to `src`. The framework is detected as Flask from `app.py`.
-3. Under **Environment Variables**, add `OPENAI_KEY` (and optionally `YT_KEY` and
-   `OPENAI_MODEL`). Deploy, then test the `*.vercel.app` URL.
+3. Under **Environment Variables**, add `GEMINI_API_KEY` (and optionally `YT_KEY`). Deploy, then test the `*.vercel.app` URL.
 4. **Settings → Domains** → add `ytrecap.org` and `www.ytrecap.org`. Vercel shows the
    DNS records to set at your registrar; replace the old Google records with them.
 5. Once the new site is live on the domain, shut down the old one in GCP: delete the Cloud
@@ -52,7 +51,7 @@ The Procfile makes this a single command from `src/`:
 ```bash
 gcloud run deploy <existing-service-name> --source . --region <region> \
   --allow-unauthenticated --min-instances 0 \
-  --set-env-vars OPENAI_KEY=...,YT_KEY=...
+  --set-env-vars GEMINI_API_KEY=...,YT_KEY=...
 ```
 
 Reusing the existing service name keeps the ytrecap.org domain mapping. Afterwards, set
@@ -60,22 +59,17 @@ an Artifact Registry cleanup policy so old images get deleted automatically.
 
 ## AI costs
 
-Summaries call the **OpenAI API** with the key in `OPENAI_KEY` (the old code used
-`gpt-3.5-turbo`; now `gpt-4o-mini` by default, set with `OPENAI_MODEL`). It's pay-as-you-go
-and billed to whichever OpenAI account owns that key. Check
-[platform.openai.com/usage](https://platform.openai.com/usage). At low traffic, a summary
-costs a fraction of a cent.
+The original site called the **OpenAI API** (`gpt-3.5-turbo`) with whatever key was set as
+`OPENAI_KEY` in the host's environment variables. That key is billed to the OpenAI account
+that created it; check [platform.openai.com/usage](https://platform.openai.com/usage) and
+the API keys page there.
 
-To make AI free too, point the app at Google Gemini's free tier through its
-OpenAI-compatible endpoint. No code changes needed:
-
-```
-OPENAI_KEY=<Gemini API key from aistudio.google.com>
-OPENAI_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/
-OPENAI_MODEL=<a current Gemini Flash model name>
-```
-
-(The free tier is rate-limited, and Google may use free-tier data to improve its products.)
+The app now prefers a **free Gemini key** (`GEMINI_API_KEY` from
+[aistudio.google.com/apikey](https://aistudio.google.com/apikey)) and uses the
+`gemini-flash-latest` model by default. The free tier is rate-limited (on the order of 10–15
+requests a minute), and Google may use free-tier requests to improve its products. If the
+limit is hit, users see a friendly "try again in a minute" message. `OPENAI_KEY` still works
+if you'd rather pay, and `AI_MODEL` overrides the model for either provider.
 
 ## Known limitation: transcripts from cloud servers
 
