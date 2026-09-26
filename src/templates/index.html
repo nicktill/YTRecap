@@ -70,12 +70,15 @@
 
     <main class="shell">
       <section class="hero" id="hero">
-        <p class="eyebrow"><span class="dot"></span>AI summaries for YouTube</p>
-        <h1>Watch less.<br /><em>Understand more.</em></h1>
-        <p class="lede">Paste any YouTube link and get the key ideas, a clear summary, and clickable chapters in seconds.</p>
+        <p class="eyebrow intro" style="--d: 0.05s"><span class="dot"></span>AI summaries for YouTube</p>
+        <h1>
+          <span class="line"><span class="word" style="--d: 0.15s">Watch</span> <span class="word" style="--d: 0.25s">less.</span></span>
+          <em class="line"><span class="word" style="--d: 0.4s">Understand</span> <span class="word" style="--d: 0.52s">more.</span></em>
+        </h1>
+        <p class="lede intro" style="--d: 0.7s">Paste any YouTube link and get the key ideas, a clear summary, and clickable chapters in seconds.</p>
       </section>
 
-      <form class="composer" id="composer" autocomplete="off" novalidate>
+      <form class="composer intro" id="composer" style="--d: 0.82s" autocomplete="off" novalidate>
         <div class="composer-field">
           <svg class="yt-glyph" viewBox="0 0 24 24" aria-hidden="true"><rect x="2" y="5" width="20" height="14" rx="4.5" fill="currentColor" /><path d="M10 9.2v5.6l4.8-2.8z" fill="var(--surface)" /></svg>
           <label class="sr-only" for="url">YouTube video URL</label>
@@ -98,7 +101,7 @@
         <p class="form-error" id="form-error" role="alert" hidden></p>
       </form>
 
-      <section class="examples" id="examples">
+      <section class="examples intro" id="examples" style="--d: 0.95s">
         <span class="examples-label">Try an example</span>
         <button class="chip" type="button" data-example="UF8uR6Z6KLc">Steve Jobs at Stanford</button>
         <button class="chip" type="button" data-example="iG9CE55wbtY">Schools &amp; creativity</button>
@@ -113,23 +116,6 @@
         <div class="recent-list" id="recent-list"></div>
       </section>
 
-      <section class="features" id="features">
-        <div class="feature">
-          <span class="feature-icon"><svg><use href="#i-sparkle" /></svg></span>
-          <h3>Key takeaways</h3>
-          <p>The handful of ideas worth remembering, up front.</p>
-        </div>
-        <div class="feature">
-          <span class="feature-icon"><svg><use href="#i-clock" /></svg></span>
-          <h3>Clickable chapters</h3>
-          <p>Jump straight to the moment that matters in the video.</p>
-        </div>
-        <div class="feature">
-          <span class="feature-icon"><svg><use href="#i-sliders" /></svg></span>
-          <h3>Your length</h3>
-          <p>Brief, standard, or detailed — switch anytime.</p>
-        </div>
-      </section>
 
       <section class="result" id="result" hidden aria-live="polite">
         <aside class="video-card">
