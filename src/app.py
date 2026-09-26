@@ -392,5 +392,5 @@ def demo_stream(length):  # noqa: ARG001 - the sample is the same at every lengt
 
 if __name__ == "__main__":
     mode = "demo mode (no AI key set)" if DEMO_MODE else f"model {AI_MODEL}"
-    print(f"YTRecap running on http://localhost:{os.environ.get('PORT', 5000)} using {mode}")
-    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
+    print(f"YTRecap running on http://localhost:{os.environ.get('PORT', 5050)} using {mode}")
+    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5050)))

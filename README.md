@@ -20,7 +20,7 @@ cd YTRecap/src
 python3 -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env   # add a free GEMINI_API_KEY (or an OPENAI_KEY)
-python3 app.py         # http://localhost:5000
+python3 app.py         # http://localhost:5050
 ```
 
 Without an AI key, the app runs in **demo mode** and streams a sample summary, so you can
