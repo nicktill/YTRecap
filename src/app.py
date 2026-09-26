@@ -1,241 +1,382 @@
-# Import necessary libraries
+"""YTRecap: AI summaries for any YouTube video."""
+import json
 import os
-import openai
-from flask import Flask, render_template, request, jsonify
-from youtube_transcript_api import YouTubeTranscriptApi, CouldNotRetrieveTranscript
 import re
-from googleapiclient.discovery import build
-import datetime
-import isodate
-from dotenv import load_dotenv
+import time
+from collections import OrderedDict
 
-# Initialize Flask app and load environment variables
-app = Flask(__name__)
+import isodate
+import requests
+from dotenv import load_dotenv
+from flask import Flask, Response, jsonify, render_template, request, stream_with_context
+from openai import OpenAI
+from youtube_transcript_api import YouTubeTranscriptApi
+
 load_dotenv()
 
-# Set OpenAI API key
-openai.api_key = os.environ.get('OPENAI_KEY')
+app = Flask(__name__)
 
-# Function to format duration string into a human-readable format
-def format_duration(duration_string):
-    duration = isodate.parse_duration(duration_string)
-    total_seconds = int(duration.total_seconds())
-    hours, remainder = divmod(total_seconds, 3600)
-    minutes, seconds = divmod(remainder, 60)
-    if hours > 0:
-        return f"{hours}h {minutes}m {seconds}s"
-    elif minutes > 0:
-        return f"{minutes}m {seconds}s"
-    else:
-        return f"{seconds}s"
+OPENAI_KEY = os.environ.get("OPENAI_KEY") or os.environ.get("OPENAI_API_KEY")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+YT_KEY = os.environ.get("YT_KEY")
+# Demo mode streams a canned summary so the UI can be previewed without API keys.
+DEMO_MODE = os.environ.get("YTRECAP_DEMO") == "1" or not OPENAI_KEY
 
-# Function to format view count into a human-readable format
-def format_view_count(view_count):
-    view_count = int(view_count)
-    if view_count >= 1000000:
-        return f"{view_count // 1000000}M"
-    elif view_count >= 10000:
-        return f"{view_count // 1000}K"
-    else:
-        return str(view_count)
+client = OpenAI(api_key=OPENAI_KEY) if OPENAI_KEY else None
 
-# Function to format date string into a human-readable format
-def format_date(date_string):
-    date = datetime.datetime.fromisoformat(date_string[:-1])
-    return date.strftime("%B %d, %Y")
+# Roughly 30k tokens of transcript; longer videos are sampled evenly to fit.
+MAX_TRANSCRIPT_CHARS = 120_000
 
-# Function to parse transcript and extract text information
-def parse_text_info(input_list):
-    #regex to remove timestamps and speaker names
-    pattern = re.compile(r"'text':\s+'(?:\[[^\]]*\]\s*)?([^']*)'")
-    output = ""
-    for item in input_list:
-        match = pattern.search(str(item))
+LENGTHS = {
+    "brief": {"words": 150, "takeaways": "3", "chapters": "3-5"},
+    "standard": {"words": 350, "takeaways": "4-6", "chapters": "4-8"},
+    "detailed": {"words": 750, "takeaways": "6-8", "chapters": "6-12"},
+}
+
+VIDEO_ID_PATTERNS = [
+    r"(?:v=|vi=)([\w-]{11})",
+    r"youtu\.be/([\w-]{11})",
+    r"/(?:shorts|embed|live|v)/([\w-]{11})",
+    r"^/?([\w-]{11})$",
+]
+
+
+def extract_video_id(text):
+    text = (text or "").strip()
+    for pattern in VIDEO_ID_PATTERNS:
+        match = re.search(pattern, text)
         if match:
-            text = match.group(1).strip()
-            text = text.replace('\n', ' ')
-            text = re.sub(' +', ' ', text)
-            output += text + " "
-       
-    return output.strip()
+            return match.group(1)
+    return None
 
 
-# Function to generate summary using OpenAI API
-def generateSummaryWithCaptions(captions, summary_length, yt_url, yt_title, yt_description, yt_author):
-    # Set default length to 200 tokens
-    # Set summary length to default value if user does not select a summary length
+# ---------------------------------------------------------------------------
+# Formatting helpers
+# ---------------------------------------------------------------------------
+
+def format_duration(iso):
+    total = int(isodate.parse_duration(iso).total_seconds())
+    hours, rem = divmod(total, 3600)
+    minutes, seconds = divmod(rem, 60)
+    if hours:
+        return f"{hours}:{minutes:02d}:{seconds:02d}"
+    return f"{minutes}:{seconds:02d}"
+
+
+def format_count(n):
+    n = int(n)
+    for threshold, suffix in ((1_000_000_000, "B"), (1_000_000, "M"), (1_000, "K")):
+        if n >= threshold:
+            value = n / threshold
+            return f"{value:.1f}".rstrip("0").rstrip(".") + suffix
+    return str(n)
+
+
+def format_date(iso):
+    return time.strftime("%b %-d, %Y", time.strptime(iso[:10], "%Y-%m-%d"))
+
+
+def format_timestamp(seconds):
+    seconds = int(seconds)
+    hours, rem = divmod(seconds, 3600)
+    minutes, secs = divmod(rem, 60)
+    return f"{hours}:{minutes:02d}:{secs:02d}" if hours else f"{minutes:02d}:{secs:02d}"
+
+
+# ---------------------------------------------------------------------------
+# YouTube data
+# ---------------------------------------------------------------------------
+
+class VideoNotFound(Exception):
+    pass
+
+
+def fetch_video_info(video_id):
+    """Video metadata from the Data API, or oEmbed when no API key is configured."""
+    if YT_KEY:
+        resp = requests.get(
+            "https://www.googleapis.com/youtube/v3/videos",
+            params={"part": "snippet,statistics,contentDetails", "id": video_id, "key": YT_KEY},
+            timeout=10,
+        )
+        resp.raise_for_status()
+        items = resp.json().get("items", [])
+        if not items:
+            raise VideoNotFound
+        item = items[0]
+        snippet, stats = item["snippet"], item.get("statistics", {})
+        return {
+            "id": video_id,
+            "title": snippet["title"],
+            "channel": snippet["channelTitle"],
+            "description": snippet.get("description", ""),
+            "published": format_date(snippet["publishedAt"]),
+            "views": format_count(stats["viewCount"]) if "viewCount" in stats else None,
+            "duration": format_duration(item["contentDetails"]["duration"]),
+        }
+
+    resp = requests.get(
+        "https://www.youtube.com/oembed",
+        params={"url": f"https://www.youtube.com/watch?v={video_id}", "format": "json"},
+        timeout=10,
+    )
+    if resp.status_code in (400, 401, 403, 404):
+        raise VideoNotFound
+    resp.raise_for_status()
+    data = resp.json()
+    return {
+        "id": video_id,
+        "title": data.get("title", "Untitled video"),
+        "channel": data.get("author_name", ""),
+        "description": "",
+        "published": None,
+        "views": None,
+        "duration": None,
+    }
+
+
+def fetch_transcript(video_id):
+    """Transcript as '[mm:ss] text' lines grouped into ~30s blocks, or None."""
+    api = YouTubeTranscriptApi()
     try:
-        if summary_length >= 300:
-            message = f"Please provide a extremely long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title} from the channel: {yt_author}"
-        else:
-            message = f"Please provide a long and comprehensive summary based on the closed captions of this yt video provided here:\n\n {captions}\n\n MAKE SURE IT IS AROUND {summary_length} words long.Here is the video link: {yt_url} along with its title: {yt_title} from the channel: {yt_author}"
+        try:
+            snippets = api.fetch(video_id, languages=["en", "en-US", "en-GB"])
+        except Exception:
+            # Fall back to whatever language is available; the model writes in English.
+            transcript = next(iter(api.list(video_id)))
+            snippets = transcript.fetch()
+    except Exception as exc:
+        app.logger.info("No transcript for %s: %s", video_id, exc)
+        return None
 
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
+    blocks, current, block_start = [], [], None
+    for snip in snippets:
+        text = re.sub(r"\[[^\]]*\]", "", snip.text).replace("\n", " ").strip()
+        if not text:
+            continue
+        if block_start is None:
+            block_start = snip.start
+        current.append(text)
+        if snip.start - block_start >= 30:
+            blocks.append(f"[{format_timestamp(block_start)}] {' '.join(current)}")
+            current, block_start = [], None
+    if current:
+        blocks.append(f"[{format_timestamp(block_start)}] {' '.join(current)}")
+    if not blocks:
+        return None
+
+    total = sum(len(b) for b in blocks)
+    if total > MAX_TRANSCRIPT_CHARS:
+        step = total / MAX_TRANSCRIPT_CHARS
+        blocks = [blocks[int(i * step)] for i in range(int(len(blocks) / step))]
+    return "\n".join(blocks)
+
+
+# ---------------------------------------------------------------------------
+# Summarization
+# ---------------------------------------------------------------------------
+
+SYSTEM_PROMPT = """You are YTRecap, an expert at distilling YouTube videos into clear, \
+skimmable summaries. Write in confident, plain English. Never mention "the transcript" \
+or "the captions"; speak about the video directly. Output GitHub-flavored Markdown only, \
+using exactly the sections you are asked for, in order, with `## ` headings."""
+
+
+def build_prompt(video, transcript, length):
+    spec = LENGTHS[length]
+    header = (
+        f"Title: {video['title']}\nChannel: {video['channel']}\n"
+        f"Description:\n{video['description'][:3000] or '(none)'}\n"
+    )
+    sections = f"""## TL;DR
+One or two sentences capturing the core point of the video.
+
+## Key takeaways
+{spec['takeaways']} bullets. Start each with a short **bold lead-in** followed by one sentence.
+
+## Summary
+About {spec['words']} words of well-structured prose in short paragraphs."""
+
+    if transcript:
+        sections += f"""
+
+## Chapters
+{spec['chapters']} bullets, each formatted exactly as `- [mm:ss] Chapter title — one-line description`.
+Only use timestamps that appear in the transcript below."""
+        return f"{header}\nTimestamped transcript:\n{transcript}\n\nWrite these sections:\n\n{sections}"
+
+    return (
+        f"{header}\nNo transcript is available, so base the summary on the title, channel and "
+        f"description. Be honest about uncertainty rather than inventing specifics.\n\n"
+        f"Write these sections:\n\n{sections}"
+    )
+
+
+# Small in-process cache so re-requesting a summary doesn't re-bill the API.
+_cache = OrderedDict()
+CACHE_SIZE = 200
+
+
+def cache_get(key):
+    if key in _cache:
+        _cache.move_to_end(key)
+        return _cache[key]
+    return None
+
+
+def cache_put(key, value):
+    _cache[key] = value
+    _cache.move_to_end(key)
+    while len(_cache) > CACHE_SIZE:
+        _cache.popitem(last=False)
+
+
+def event(kind, **data):
+    return json.dumps({"type": kind, **data}) + "\n"
+
+
+def summarize_stream(video_id, length):
+    if DEMO_MODE:
+        yield from demo_stream(length)
+        return
+
+    yield event("status", step="video")
+    try:
+        video = fetch_video_info(video_id)
+    except VideoNotFound:
+        yield event("error", message="We couldn't find that video. It may be private or removed.")
+        return
+    except requests.RequestException:
+        app.logger.exception("YouTube metadata request failed")
+        yield event("error", message="YouTube didn't respond. Please try again in a moment.")
+        return
+
+    yield event("status", step="transcript")
+    cached = cache_get((video_id, length))
+    transcript = None if cached else fetch_transcript(video_id)
+    source = cached["source"] if cached else ("transcript" if transcript else "description")
+    video_public = {k: v for k, v in video.items() if k != "description"}
+    yield event("video", video=video_public, source=source)
+
+    if cached:
+        yield event("delta", text=cached["text"])
+        yield event("done")
+        return
+
+    yield event("status", step="writing")
+    try:
+        stream = client.chat.completions.create(
+            model=OPENAI_MODEL,
+            temperature=0.4,
+            stream=True,
             messages=[
-                {"role": "system", "content": "You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via input url)"},
-                {"role": "user", "content": message}
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {"role": "user", "content": build_prompt(video, transcript, length)},
             ],
-            max_tokens=1500,
-            n=1,
-            stop=None,
-            temperature=0.5,
         )
-        # Remove newlines and extra spaces from summary
-        summary = response.choices[0].message.content.strip()
-        return summary
+        parts = []
+        for chunk in stream:
+            if chunk.choices and chunk.choices[0].delta.content:
+                parts.append(chunk.choices[0].delta.content)
+                yield event("delta", text=chunk.choices[0].delta.content)
+    except Exception:
+        app.logger.exception("Summary generation failed")
+        yield event("error", message="Something went wrong while writing the summary. Please try again.")
+        return
 
-    except openai.error.InvalidRequestError:
-        # Return error message if summary cannot be generated
-        summaryNoCaptions = generateSummaryNoCaptions(summary_length, yt_url, yt_title, yt_description, yt_author)
-        return summaryNoCaptions
+    cache_put((video_id, length), {"text": "".join(parts), "source": source})
+    yield event("done")
 
-#  - This is a fallback function to generate a summary when no captions are provided by YouTube
-# - This function is called when the video is too long (causes character limit to openAI API, or there are no captions)
-def generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_author):
-    if summary_length >= 300: 
-        message = f"Please provide a extremely long and in depth comprehensive summary about this video \n\n URL: {url} \n\n Please make sure summary length is approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n the channel name here {yt_author} \n\n and the descripton here: {yt_description} to provide a summary overview of the video"
-    else:
-        message = f"Please provide an in depth summary about this video \n\n. URL: {url} \n\n Please make sure summary length is approximately {summary_length} words. Please use the title of the video here {yt_title} \n\n the channel name here \n\n {yt_author} and the descripton here: \n\n {yt_description} to provide a summary overview of the video"
-    print("Parsing API without captions due to long video OR not captions (or both)...")
-    try: 
-      response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[
-                {"role": "system", "content": "You are an AI assistant for YTRecap, a webapp that provides very comprehensive and lengthy summaries for any provided youtube video (via input url)"},
-                {"role": "user", "content": message}
-            ],
-            max_tokens=1500,
-            n=1,
-            stop=None,
-            temperature=0.5,
-        )
-    except: 
-        # Return error message if summary cannot be generated
-        summary = "Uh oh! Sorry, we couldn't generate a summary for this video and this error was not handled. Please visit source-code: https://github.com/nicktill/YTRecap/issues and open a new issue if possibe (it is likely due to the content of the yt video description being too long, exceeding the character limit of the OpenAI API).  "
-        return summary
-    # Remove newlines and extra spaces from summary
-    summary = response.choices[0].message.content.strip()
-    return summary
 
-# Render index page
-@app.route('/', defaults={'path': ''})
-@app.route('/<path:path>')
+# ---------------------------------------------------------------------------
+# Routes
+# ---------------------------------------------------------------------------
+
+@app.route("/healthz")
+def healthz():
+    return jsonify(ok=True)
+
+
+@app.route("/api/summarize", methods=["POST"])
+def api_summarize():
+    payload = request.get_json(silent=True) or {}
+    video_id = extract_video_id(payload.get("url", ""))
+    length = payload.get("length", "standard")
+    if not video_id:
+        return jsonify(error="That doesn't look like a YouTube link. Try pasting the full video URL."), 400
+    if length not in LENGTHS:
+        length = "standard"
+    return Response(
+        stream_with_context(summarize_stream(video_id, length)),
+        mimetype="application/x-ndjson",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
+
+
+# Catch-all so youtube.com links work with the domain swapped in, e.g.
+# ytrecap.org/watch?v=ID, ytrecap.org/shorts/ID or ytrecap.org/ID.
+@app.route("/", defaults={"path": ""})
+@app.route("/<path:path>")
 def index(path):
-    return render_template('index.html')
+    initial_id = request.args.get("v") or extract_video_id("/" + path)
+    return render_template("index.html", initial_id=initial_id or "", demo=DEMO_MODE)
 
-# Get transcript and generate summary
-@app.route('/', methods=['POST'], defaults={'path': ''})
-@app.route('/<path:path>', methods=['POST'])
-def get_transcript(path):
-    url = request.form['url']
-    # Extract video ID from URL using regex
-    match = re.search(r"(?<=v=)[\w-]+|[\w-]+(?<=/v/)|(?<=youtu.be/)[\w-]+", url)
-    # If match is found, get video information from YouTube API
-    if match:
-        video_id = match.group(0)
-        youtube = build('youtube', 'v3', developerKey=os.environ.get('YT_KEY'))
-        video_response = youtube.videos().list(
-            part='snippet,statistics, contentDetails',
-            id=video_id
-        ).execute()
-        
-        # Extract video information
-        video_info = {
-            'title': video_response['items'][0]['snippet']['title'],
-            'author': video_response['items'][0]['snippet']['channelTitle'],
-            'date': format_date(video_response['items'][0]['snippet']['publishedAt']),
-            'view_count': format_view_count(video_response['items'][0]['statistics']['viewCount']),
-            'thumbnail': video_response['items'][0]['snippet']['thumbnails']['medium']['url'],
-            'description': video_response['items'][0]['snippet']['description'], # Add description
-            'tags': video_response['items'][0]['snippet'].get('tags', []), # Add tags
-            'duration': format_duration(video_response['items'][0]['contentDetails']['duration']), # Add duration
-            'likes': video_response['items'][0]['statistics'].get('likeCount', 0), # Add like count
-            'dislikes': video_response['items'][0]['statistics'].get('dislikeCount', 0), # Add dislike count
-        }
 
-    else:
-        return render_template('index.html', error="Invalid YouTube URL")
-    
-    # store video info into vars
-    yt_author = video_response['items'][0]['snippet']['channelTitle']
-    yt_title = video_response['items'][0]['snippet']['title']
-    summary_length = int(request.form['summary_length'])
-    yt_description = video_response['items'][0]['snippet']['description'].replace("\n", " ").strip()
-    # yt_tags = video_response['items'][0]['snippet'].get('tags', [])
-    # yt_duration = format_duration(video_response['items'][0]['contentDetails']['duration'])
-    # yt_likes = video_response['items'][0]['statistics'].get('likeCount', 0)
-    # yt_dislikes = video_response['items'][0]['statistics'].get('dislikeCount', 0)
+# ---------------------------------------------------------------------------
+# Demo mode
+# ---------------------------------------------------------------------------
 
-    try: 
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
-        captions = parse_text_info(transcript)
-    except:
-        captions = None
-        
-    if captions:
-        summary = generateSummaryWithCaptions(captions, summary_length, url, yt_title, yt_description, yt_author)
-    else:
-        summary = generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_author)
+DEMO_VIDEO = {
+    "id": "UF8uR6Z6KLc",
+    "title": "Steve Jobs' 2005 Stanford Commencement Address",
+    "channel": "Stanford",
+    "published": "Mar 7, 2008",
+    "views": "44M",
+    "duration": "15:05",
+}
 
-    # Render the result in the template
-    return render_template('index.html', video_info=video_info, summary=summary, video_id=video_id, summary_length=summary_length)
+DEMO_SUMMARY = """## TL;DR
+Steve Jobs tells three stories from his life — about connecting the dots, love and loss, and death — to argue that you should trust your intuition, do work you love, and not waste your limited time living someone else's life.
 
-#Function to generate summary with newly updaed length (if user changes summary length)
-@app.route('/getNewLengthSummary', methods=['POST'])
-def getNewLengthSummary():
-    # Get the data from the request
-    url = request.form['url']
-    match = re.search(r"(?<=v=)[\w-]+|[\w-]+(?<=/v/)|(?<=youtu.be/)[\w-]+", url)
-    summary_length = int(request.form['summary_length'])
-    if match:
-        video_id = match.group(0)
-        youtube = build('youtube', 'v3', developerKey=os.environ.get('YT_KEY'))
-        video_response = youtube.videos().list(
-            part='snippet,statistics, contentDetails',
-            id=video_id
-        ).execute()
-        
-        # Extract video information
-        video_info = {
-            'title': video_response['items'][0]['snippet']['title'],
-            'author': video_response['items'][0]['snippet']['channelTitle'],
-            'date': format_date(video_response['items'][0]['snippet']['publishedAt']),
-            'view_count': format_view_count(video_response['items'][0]['statistics']['viewCount']),
-            'thumbnail': video_response['items'][0]['snippet']['thumbnails']['medium']['url'],
-            'description': video_response['items'][0]['snippet']['description'], # Add description
-            'tags': video_response['items'][0]['snippet'].get('tags', []), # Add tags
-            'duration': format_duration(video_response['items'][0]['contentDetails']['duration']), # Add duration
-            'likes': video_response['items'][0]['statistics'].get('likeCount', 0), # Add like count
-            'dislikes': video_response['items'][0]['statistics'].get('dislikeCount', 0), # Add dislike count
-        }
+## Key takeaways
+- **Trust the dots will connect.** You can't plan your path looking forward; meaning only becomes clear in hindsight, so trust your curiosity.
+- **Setbacks can be gifts.** Being fired from Apple freed Jobs to be a beginner again and led to NeXT, Pixar, and his family.
+- **Do what you love.** Great work comes from loving what you do; if you haven't found it yet, keep looking and don't settle.
+- **Let mortality focus you.** Remembering that you will die is the best tool for cutting through fear, pride, and other people's expectations.
+- **Stay hungry, stay foolish.** Keep a beginner's hunger and willingness to take risks throughout your life.
 
-    else:
-        return render_template('index.html', error="Invalid YouTube URL")
-    
-    # store video info into vars
-    yt_author = video_response['items'][0]['snippet']['channelTitle']
-    yt_title = video_response['items'][0]['snippet']['title']
-    summary_length = int(request.form['summary_length'])
-    yt_description = video_response['items'][0]['snippet']['description'].replace("\n", " ").strip()
-    # yt_tags = video_response['items'][0]['snippet'].get('tags', [])
-    # yt_duration = format_duration(video_response['items'][0]['contentDetails']['duration'])
-    # yt_likes = video_response['items'][0]['statistics'].get('likeCount', 0)
-    # yt_dislikes = video_response['items'][0]['statistics'].get('dislikeCount', 0)
+## Summary
+Jobs opens by admitting he never graduated from college, then offers three stories instead of a traditional speech.
 
-    try: 
-        transcript = YouTubeTranscriptApi.get_transcript(video_id)
-        captions = parse_text_info(transcript)
-    except:
-        captions = None
-        
-    if captions:
-        summary = generateSummaryWithCaptions(captions, summary_length, url, yt_title, yt_description, yt_author)
-    else:
-        summary = generateSummaryNoCaptions(summary_length, url, yt_title, yt_description, yt_author)
+The first is about connecting the dots. He dropped out of Reed College after six months to stop spending his working-class parents' savings, then stayed on to drop in on classes that interested him. A calligraphy course seemed useless at the time, yet ten years later it shaped the Macintosh's beautiful typography. His point: you can only connect the dots looking backward, so you have to trust that they will connect.
 
-    return jsonify(summary=summary)
+The second story is about love and loss. Jobs started Apple in his parents' garage at 20, and by 30 he was publicly fired from the company he founded. Though devastating, it turned out to be one of the best things that ever happened to him. The heaviness of success was replaced by the lightness of being a beginner, and in the following years he started NeXT, built Pixar, and met his wife. Apple later bought NeXT and he returned. He urges graduates to find work they love, because it is the only way to do great work.
 
-# Run Flask app
-if __name__ == '__main__':
-    app.run(debug=False, host='0.0.0.0', port=int(os.environ.get('PORT', 5000)))
+The third story is about death. Diagnosed with pancreatic cancer a year earlier, Jobs describes facing mortality up close. Remembering that you are going to die, he says, is the best way to avoid the trap of thinking you have something to lose. Your time is limited, so don't let the noise of others' opinions drown out your inner voice.
+
+He closes with the farewell message from the final issue of the Whole Earth Catalog: "Stay hungry. Stay foolish."
+
+## Chapters
+- [00:00] Introduction — Jobs admits this is the closest he's come to a college graduation.
+- [00:55] Connecting the dots — Dropping out of Reed, and how a calligraphy class shaped the Mac.
+- [05:05] Love and loss — Starting Apple, getting fired, and the creative rebirth that followed.
+- [09:05] Death — His cancer diagnosis and using mortality to focus on what matters.
+- [13:35] Stay hungry, stay foolish — The Whole Earth Catalog and his parting wish for graduates.
+"""
+
+
+def demo_stream(length):  # noqa: ARG001 - the sample is the same at every length
+    for step in ("video", "transcript"):
+        yield event("status", step=step)
+        time.sleep(0.5)
+    yield event("video", video=DEMO_VIDEO, source="transcript", demo=True)
+    yield event("status", step="writing")
+    time.sleep(0.6)
+    for token in re.findall(r"\S+\s*", DEMO_SUMMARY):
+        yield event("delta", text=token)
+        time.sleep(0.012)
+    yield event("done")
+
+
+if __name__ == "__main__":
+    app.run(debug=False, host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
