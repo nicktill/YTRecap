@@ -21,24 +21,22 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# AI provider. A free Gemini key (aistudio.google.com) takes priority; otherwise
-# any OpenAI-compatible key works (OPENAI_BASE_URL can point it elsewhere).
+# AI providers, tried in order: Gemini (free key from aistudio.google.com) first,
+# then any OpenAI-compatible key (OPENAI_BASE_URL can point it elsewhere).
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
-if GEMINI_KEY:
-    AI_KEY = GEMINI_KEY
-    AI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
-    AI_MODEL = os.environ.get("AI_MODEL", "gemini-flash-latest")
-else:
-    AI_KEY = os.environ.get("OPENAI_KEY") or os.environ.get("OPENAI_API_KEY")
-    AI_BASE_URL = os.environ.get("OPENAI_BASE_URL")
-    AI_MODEL = os.environ.get("AI_MODEL") or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
-# Model that watches the video when YouTube blocks the transcript fetch.
-GEMINI_VIDEO_MODEL = os.environ.get("GEMINI_VIDEO_MODEL", "gemini-2.5-flash")
+GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
+OPENAI_KEY = os.environ.get("OPENAI_KEY") or os.environ.get("OPENAI_API_KEY")
+OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 YT_KEY = os.environ.get("YT_KEY")
-# Demo mode streams a canned summary so the UI can be previewed without API keys.
-DEMO_MODE = os.environ.get("YTRECAP_DEMO") == "1" or not AI_KEY
 
-client = OpenAI(api_key=AI_KEY, base_url=AI_BASE_URL) if AI_KEY else None
+PROVIDERS = []  # (name, client, model)
+if GEMINI_KEY:
+    PROVIDERS.append(("gemini", OpenAI(api_key=GEMINI_KEY, base_url="https://generativelanguage.googleapis.com/v1beta/openai/", max_retries=1), GEMINI_MODEL))
+if OPENAI_KEY:
+    PROVIDERS.append(("openai", OpenAI(api_key=OPENAI_KEY, base_url=os.environ.get("OPENAI_BASE_URL")), OPENAI_MODEL))
+AI_MODEL = " -> ".join(m for _, _, m in PROVIDERS)
+# Demo mode streams a canned summary so the UI can be previewed without API keys.
+DEMO_MODE = os.environ.get("YTRECAP_DEMO") == "1" or not PROVIDERS
 
 # Roughly 30k tokens of transcript; longer videos are sampled evenly to fit.
 MAX_TRANSCRIPT_CHARS = 120_000
@@ -197,14 +195,17 @@ def fetch_transcript(video_id):
 
 def gemini_video_stream(video_id, prompt):
     """Have Gemini watch the video itself (YouTube URL input). Yields text chunks."""
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_VIDEO_MODEL}:streamGenerateContent"
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_MODEL}:streamGenerateContent"
     body = {
         "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
         "contents": [{"parts": [
-            {"file_data": {"file_uri": f"https://www.youtube.com/watch?v={video_id}"}},
+            # Summaries need the speech, not every frame: sampling one frame per 5s at
+            # low resolution cuts video tokens ~10x, so hour-long videos fit free-tier limits.
+            {"file_data": {"file_uri": f"https://www.youtube.com/watch?v={video_id}"},
+             "video_metadata": {"fps": 0.2}},
             {"text": prompt},
         ]}],
-        "generationConfig": {"temperature": 0.4},
+        "generationConfig": {"temperature": 0.4, "mediaResolution": "MEDIA_RESOLUTION_LOW"},
     }
     with requests.post(url, params={"alt": "sse"}, headers={"x-goog-api-key": GEMINI_KEY},
                        json=body, stream=True, timeout=(10, 55)) as resp:
@@ -340,30 +341,33 @@ def summarize_stream(video_id, length, fresh=False):
                 yield event("error", message="Something went wrong while writing the summary. Please try again.")
                 return
             source = "description"
-            yield event("video", video=video_public, source=source)
     if source != "video":
-        try:
-            stream = client.chat.completions.create(
-                model=AI_MODEL,
-                temperature=0.4,
-                stream=True,
-                messages=[
-                    {"role": "system", "content": SYSTEM_PROMPT},
-                    {"role": "user", "content": build_prompt(video, transcript, length)},
-                ],
-            )
-            parts = []
-            for chunk in stream:
-                if chunk.choices and chunk.choices[0].delta.content:
-                    parts.append(chunk.choices[0].delta.content)
-                    yield event("delta", text=chunk.choices[0].delta.content)
-        except RateLimitError:
-            yield event("error", message="YTRecap is a bit busy right now. Please try again in a minute.")
-            return
-        except Exception:
-            app.logger.exception("Summary generation failed")
-            yield event("error", message="Something went wrong while writing the summary. Please try again.")
-            return
+        prompt = build_prompt(video, transcript, length)
+        for i, (name, client, model) in enumerate(PROVIDERS):
+            try:
+                stream = client.chat.completions.create(
+                    model=model,
+                    temperature=0.4,
+                    stream=True,
+                    messages=[
+                        {"role": "system", "content": SYSTEM_PROMPT},
+                        {"role": "user", "content": prompt},
+                    ],
+                )
+                for chunk in stream:
+                    if chunk.choices and chunk.choices[0].delta.content:
+                        parts.append(chunk.choices[0].delta.content)
+                        yield event("delta", text=chunk.choices[0].delta.content)
+                break
+            except Exception as exc:
+                app.logger.warning("%s summary failed: %s", name, " ".join(str(exc).split())[:300])
+                # Fall through to the next provider only if nothing was streamed yet.
+                if parts or i == len(PROVIDERS) - 1:
+                    if isinstance(exc, RateLimitError):
+                        yield event("error", message="YTRecap is a bit busy right now. Please try again in a minute.")
+                    else:
+                        yield event("error", message="Something went wrong while writing the summary. Please try again.")
+                    return
 
     cache_put((video_id, length), {"text": "".join(parts), "source": source})
     yield event("done")

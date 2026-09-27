@@ -21,7 +21,6 @@
     title: $("#video-title"),
     channel: $("#video-channel"),
     stats: $("#video-stats"),
-    source: $("#source-badge"),
     ytLink: $("#yt-link"),
     copy: $("#copy-btn"),
     download: $("#download-btn"),
@@ -255,13 +254,12 @@
     els.title.innerHTML = '<span class="skeleton" style="width:90%"></span><span class="skeleton" style="width:60%"></span>';
     els.channel.textContent = "";
     els.stats.innerHTML = "";
-    els.source.hidden = true;
     els.ytLink.href = `https://www.youtube.com/watch?v=${videoId}`;
   }
 
   els.thumb.addEventListener("error", () => els.thumb.classList.add("broken"));
 
-  function fillVideoCard(video, source) {
+  function fillVideoCard(video) {
     state.video = video;
     els.title.textContent = video.title;
     els.channel.textContent = video.channel;
@@ -271,9 +269,6 @@
       video.published,
     ].filter(Boolean);
     els.stats.innerHTML = stats.map((s) => `<span class="stat">${escapeHtml(s)}</span>`).join("");
-    els.source.hidden = false;
-    els.source.classList.toggle("warn", source === "description");
-    els.source.textContent = { transcript: "From transcript", video: "From video" }[source] || "From description only";
     document.title = `${video.title} · YTRecap`;
   }
 
@@ -434,7 +429,7 @@
           const evt = JSON.parse(line);
           if (evt.type === "status") setStep(evt.step);
           else if (evt.type === "video") {
-            fillVideoCard(evt.video, evt.source);
+            fillVideoCard(evt.video);
             saveHistory(evt.video);
           } else if (evt.type === "delta") {
             els.progress.hidden = true;
