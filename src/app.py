@@ -207,6 +207,7 @@ def gemini_video_stream(video_id, prompt):
         ]}],
         "generationConfig": {"temperature": 0.4, "mediaResolution": "MEDIA_RESOLUTION_LOW"},
     }
+    usage = {}
     with requests.post(url, params={"alt": "sse"}, headers={"x-goog-api-key": GEMINI_KEY},
                        json=body, stream=True, timeout=(10, 55)) as resp:
         if resp.status_code != 200:
@@ -215,10 +216,14 @@ def gemini_video_stream(video_id, prompt):
             if not line or not line.startswith("data:"):
                 continue
             data = json.loads(line[5:])
+            if data.get("usageMetadata", {}).get("candidatesTokenCount"):
+                usage = data["usageMetadata"]
             for cand in data.get("candidates", []):
                 for part in cand.get("content", {}).get("parts", []):
                     if part.get("text"):
                         yield part["text"]
+    app.logger.warning("Gemini video %s tokens: in=%s out=%s", video_id,
+                       usage.get("promptTokenCount"), usage.get("candidatesTokenCount"))
 
 
 # ---------------------------------------------------------------------------
