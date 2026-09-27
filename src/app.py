@@ -10,7 +10,12 @@ import requests
 from dotenv import load_dotenv
 from flask import Flask, Response, jsonify, render_template, request, stream_with_context
 from openai import OpenAI, RateLimitError
-from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api import (
+    NoTranscriptFound,
+    TranscriptsDisabled,
+    VideoUnavailable,
+    YouTubeTranscriptApi,
+)
 
 load_dotenv()
 
@@ -27,6 +32,8 @@ else:
     AI_KEY = os.environ.get("OPENAI_KEY") or os.environ.get("OPENAI_API_KEY")
     AI_BASE_URL = os.environ.get("OPENAI_BASE_URL")
     AI_MODEL = os.environ.get("AI_MODEL") or os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
+# Model that watches the video when YouTube blocks the transcript fetch.
+GEMINI_VIDEO_MODEL = os.environ.get("GEMINI_VIDEO_MODEL", "gemini-2.5-flash")
 YT_KEY = os.environ.get("YT_KEY")
 # Demo mode streams a canned summary so the UI can be previewed without API keys.
 DEMO_MODE = os.environ.get("YTRECAP_DEMO") == "1" or not AI_KEY
@@ -145,18 +152,25 @@ def fetch_video_info(video_id):
 
 
 def fetch_transcript(video_id):
-    """Transcript as '[mm:ss] text' lines grouped into ~30s blocks, or None."""
+    """Transcript as '[mm:ss] text' lines grouped into ~30s blocks, or None.
+
+    Returns (transcript, captionless). captionless is True only when the video
+    really has no captions; a YouTube block on cloud IPs or any other failure
+    leaves it False so the caller can try another source.
+    """
     api = YouTubeTranscriptApi()
     try:
         try:
             snippets = api.fetch(video_id, languages=["en", "en-US", "en-GB"])
-        except Exception:
+        except NoTranscriptFound:
             # Fall back to whatever language is available; the model writes in English.
             transcript = next(iter(api.list(video_id)))
             snippets = transcript.fetch()
+    except (TranscriptsDisabled, NoTranscriptFound, VideoUnavailable, StopIteration):
+        return None, True
     except Exception as exc:
-        app.logger.info("No transcript for %s: %s", video_id, exc)
-        return None
+        app.logger.warning("Transcript fetch failed for %s: %s: %s", video_id, type(exc).__name__, " ".join(str(exc).split())[:200])
+        return None, False
 
     blocks, current, block_start = [], [], None
     for snip in snippets:
@@ -172,13 +186,38 @@ def fetch_transcript(video_id):
     if current:
         blocks.append(f"[{format_timestamp(block_start)}] {' '.join(current)}")
     if not blocks:
-        return None
+        return None, True
 
     total = sum(len(b) for b in blocks)
     if total > MAX_TRANSCRIPT_CHARS:
         step = total / MAX_TRANSCRIPT_CHARS
         blocks = [blocks[int(i * step)] for i in range(int(len(blocks) / step))]
-    return "\n".join(blocks)
+    return "\n".join(blocks), False
+
+
+def gemini_video_stream(video_id, prompt):
+    """Have Gemini watch the video itself (YouTube URL input). Yields text chunks."""
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{GEMINI_VIDEO_MODEL}:streamGenerateContent"
+    body = {
+        "systemInstruction": {"parts": [{"text": SYSTEM_PROMPT}]},
+        "contents": [{"parts": [
+            {"file_data": {"file_uri": f"https://www.youtube.com/watch?v={video_id}"}},
+            {"text": prompt},
+        ]}],
+        "generationConfig": {"temperature": 0.4},
+    }
+    with requests.post(url, params={"alt": "sse"}, headers={"x-goog-api-key": GEMINI_KEY},
+                       json=body, stream=True, timeout=(10, 55)) as resp:
+        if resp.status_code != 200:
+            raise RuntimeError(f"Gemini video {resp.status_code}: {resp.text[:300]}")
+        for line in resp.iter_lines(decode_unicode=True):
+            if not line or not line.startswith("data:"):
+                continue
+            data = json.loads(line[5:])
+            for cand in data.get("candidates", []):
+                for part in cand.get("content", {}).get("parts", []):
+                    if part.get("text"):
+                        yield part["text"]
 
 
 # ---------------------------------------------------------------------------
@@ -191,7 +230,7 @@ or "the captions"; speak about the video directly. Output GitHub-flavored Markdo
 using exactly the sections you are asked for, in order, with `## ` headings."""
 
 
-def build_prompt(video, transcript, length):
+def build_prompt(video, transcript, length, source=None):
     spec = LENGTHS[length]
     header = (
         f"Title: {video['title']}\nChannel: {video['channel']}\n"
@@ -205,6 +244,14 @@ One or two sentences capturing the core point of the video.
 
 ## Summary
 About {spec['words']} words of well-structured prose in short paragraphs."""
+
+    if source == "video":
+        sections += f"""
+
+## Chapters
+{spec['chapters']} bullets, each formatted exactly as `- [mm:ss] Chapter title — one-line description`.
+Use timestamps from the video itself."""
+        return f"{header}\nSummarize the attached video.\n\nWrite these sections:\n\n{sections}"
 
     if transcript:
         sections += f"""
@@ -262,8 +309,16 @@ def summarize_stream(video_id, length, fresh=False):
 
     yield event("status", step="transcript")
     cached = None if fresh else cache_get((video_id, length))
-    transcript = None if cached else fetch_transcript(video_id)
-    source = cached["source"] if cached else ("transcript" if transcript else "description")
+    transcript, captionless = (None, True) if cached else fetch_transcript(video_id)
+    if cached:
+        source = cached["source"]
+    elif transcript:
+        source = "transcript"
+    elif GEMINI_KEY and not captionless:
+        # Transcript blocked (YouTube rejects cloud IPs): let Gemini watch the video.
+        source = "video"
+    else:
+        source = "description"
     video_public = {k: v for k, v in video.items() if k != "description"}
     yield event("video", video=video_public, source=source)
 
@@ -273,28 +328,42 @@ def summarize_stream(video_id, length, fresh=False):
         return
 
     yield event("status", step="writing")
-    try:
-        stream = client.chat.completions.create(
-            model=AI_MODEL,
-            temperature=0.4,
-            stream=True,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": build_prompt(video, transcript, length)},
-            ],
-        )
-        parts = []
-        for chunk in stream:
-            if chunk.choices and chunk.choices[0].delta.content:
-                parts.append(chunk.choices[0].delta.content)
-                yield event("delta", text=chunk.choices[0].delta.content)
-    except RateLimitError:
-        yield event("error", message="YTRecap is a bit busy right now. Please try again in a minute.")
-        return
-    except Exception:
-        app.logger.exception("Summary generation failed")
-        yield event("error", message="Something went wrong while writing the summary. Please try again.")
-        return
+    parts = []
+    if source == "video":
+        try:
+            for text in gemini_video_stream(video_id, build_prompt(video, None, length, "video")):
+                parts.append(text)
+                yield event("delta", text=text)
+        except Exception as exc:
+            app.logger.warning("Gemini video summary failed for %s: %s", video_id, str(exc)[:300])
+            if parts:
+                yield event("error", message="Something went wrong while writing the summary. Please try again.")
+                return
+            source = "description"
+            yield event("video", video=video_public, source=source)
+    if source != "video":
+        try:
+            stream = client.chat.completions.create(
+                model=AI_MODEL,
+                temperature=0.4,
+                stream=True,
+                messages=[
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": build_prompt(video, transcript, length)},
+                ],
+            )
+            parts = []
+            for chunk in stream:
+                if chunk.choices and chunk.choices[0].delta.content:
+                    parts.append(chunk.choices[0].delta.content)
+                    yield event("delta", text=chunk.choices[0].delta.content)
+        except RateLimitError:
+            yield event("error", message="YTRecap is a bit busy right now. Please try again in a minute.")
+            return
+        except Exception:
+            app.logger.exception("Summary generation failed")
+            yield event("error", message="Something went wrong while writing the summary. Please try again.")
+            return
 
     cache_put((video_id, length), {"text": "".join(parts), "source": source})
     yield event("done")
@@ -323,6 +392,23 @@ def api_summarize():
         mimetype="application/x-ndjson",
         headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
     )
+
+
+@app.route("/robots.txt")
+def robots():
+    body = "User-agent: *\nAllow: /\n\nSitemap: https://ytrecap.org/sitemap.xml\n"
+    return Response(body, mimetype="text/plain")
+
+
+@app.route("/sitemap.xml")
+def sitemap():
+    body = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        "  <url><loc>https://ytrecap.org/</loc></url>\n"
+        "</urlset>\n"
+    )
+    return Response(body, mimetype="application/xml")
 
 
 # Catch-all so youtube.com links work with the domain swapped in, e.g.
