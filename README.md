@@ -1,5 +1,7 @@
 # YTRecap [![GitHub stars](https://img.shields.io/github/stars/nicktill/YTRecap?style=social)](https://github.com/nicktill/YTRecap/stargazers) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-YTRecap (https://ytrecap.org) is a web application that uses the YouTube Data API to retrieve the closed captions of a YouTube video, and then passes them to an AI model to generate a summary of the video content. The application is built using Python Flask
+YTRecap (https://ytrecap.org) is a web application that fetches a YouTube video's closed captions and passes them to an AI model to generate a summary of the video content. The application is built using Python Flask.
+
+> **Note:** YouTube blocks caption requests from cloud providers (AWS, Google Cloud, Azure), which includes Vercel. On the hosted site the summary is therefore usually written from the video's title and description only. Captions work when you run the app locally.
 
 
 
