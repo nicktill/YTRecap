@@ -272,8 +272,8 @@
     ].filter(Boolean);
     els.stats.innerHTML = stats.map((s) => `<span class="stat">${escapeHtml(s)}</span>`).join("");
     els.source.hidden = false;
-    els.source.classList.toggle("warn", source !== "transcript");
-    els.source.textContent = source === "transcript" ? "From transcript" : "From description (no captions)";
+    els.source.classList.toggle("warn", source === "description");
+    els.source.textContent = { transcript: "From transcript", video: "From video" }[source] || "From description only";
     document.title = `${video.title} · YTRecap`;
   }
 
