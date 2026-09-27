@@ -784,28 +784,6 @@ body.has-result .composer-meta {
   border-top: 1px solid var(--border);
 }
 
-.source-badge {
-  display: inline-flex;
-  white-space: nowrap;
-  align-items: center;
-  gap: 6px;
-  color: var(--muted);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.source-badge::before {
-  content: "";
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--success);
-}
-
-.source-badge.warn::before {
-  background: #d99a1e;
-}
-
 .text-link {
   display: inline-flex;
   align-items: center;
