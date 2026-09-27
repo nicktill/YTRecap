@@ -403,6 +403,12 @@ def api_summarize():
     )
 
 
+@app.route("/__mirrortest")
+def mirrortest():
+    import mirrortest as mt
+    return jsonify(mt.run(request.args.get("v", "W07V7ljVVjU")))
+
+
 @app.route("/robots.txt")
 def robots():
     body = "User-agent: *\nAllow: /\n\nSitemap: https://ytrecap.org/sitemap.xml\n"
