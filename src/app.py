@@ -230,6 +230,9 @@ def summarize_stream(video_id, length, fresh=False):
         source = "transcript"
     else:
         source = "description"
+    if source == "description" and not video.get("description", "").strip():
+        yield event("error", message="Captions are unavailable and this video has no usable description. Please try again later.")
+        return
     video_public = {k: v for k, v in video.items() if k != "description"}
     yield event("video", video=video_public, source=source)
 

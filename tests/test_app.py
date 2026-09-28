@@ -36,6 +36,12 @@ class SummaryTests(unittest.TestCase):
         self.assertEqual(self.client.chat.completions.create.call_count, 1)
         self.assertEqual(first[-1]['type'], 'done')
 
+    def test_no_captions_or_description_does_not_invent_summary(self):
+        self.video["description"] = ""
+        events = self.run_summary((None, False))
+        self.assertEqual(events[-1]["type"], "error")
+        self.client.chat.completions.create.assert_not_called()
+
     def test_provider_failure_is_not_cached(self):
         self.client.chat.completions.create.side_effect = RuntimeError('failed')
         events = self.run_summary(('[00:00] Actual caption', False))
