@@ -6,15 +6,11 @@ Captions are fetched with `youtube-transcript-api`, optionally through a residen
 
 When captions cannot be retrieved, a **description-only** result is visibly labeled and has no generated timestamp chapters. If there is no usable description either, the app reports that it cannot summarize the video. Demo mode shows a clearly labeled sample rather than fetching captions or calling an AI provider.
 
-## Earlier interface previews
+## Preview
 
-These screenshots and the video show the earlier interface; they have not yet been replaced with captures of the current design.
+Current landing interface in dark mode.
 
-![Earlier interface in light mode](https://user-images.githubusercontent.com/57879193/230706884-900acd32-9570-4b83-b614-04886a51f3fc.png)
-
-![Earlier interface in dark mode](https://user-images.githubusercontent.com/57879193/230706886-4e05cdfb-53f1-4fa9-85a4-bde11e8b1e1a.png)
-
-[Earlier interface video demo](https://user-images.githubusercontent.com/57879193/230707034-093e8767-b339-495c-b039-1bf87d34e784.mov)
+![YTRecap landing page in dark mode: Watch less. Understand more.](docs/images/landing.jpg)
 
 ## Run locally
 
