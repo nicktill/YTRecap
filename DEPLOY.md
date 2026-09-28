@@ -82,9 +82,28 @@ requests a minute), and Google may use free-tier requests to improve its product
 limit is hit, users see a friendly "try again in a minute" message. `OPENAI_KEY` still works
 if you'd rather pay, and `AI_MODEL` overrides the model for either provider.
 
-## Known limitation: transcripts from cloud servers
+## Captions through a residential proxy
 
-YouTube often blocks transcript requests that come from datacenter IPs (Vercel, GCP, AWS).
-When that happens, the app falls back to summarizing from the title and description, and
-the UI labels it "From description". Getting transcripts reliably in production needs a
-residential proxy, which `youtube-transcript-api` supports but which costs money.
+Set `YT_PROXY_URL` to the provider-supplied authenticated HTTP(S) proxy URL in
+Vercel's **Preview** and **Production** environments, then deploy a new Preview.
+Never commit the value or include it in logs. Caption traffic alone uses the proxy;
+metadata and AI calls do not. With the variable absent, captions are fetched directly.
+
+The caption client uses `youtube-transcript-api`'s `GenericProxyConfig` for both
+HTTP and HTTPS. It attempts at most twice, with 3-second connect and 5-second read
+inactivity timeouts within an 18-second shared request budget. Requests timeouts
+are not a hard wall-clock limit against a continuously trickling response.
+Successful timestamped captions are cached per worker for one hour (128 entries);
+failed or empty results are never cached. Cold starts and other workers fetch again.
+
+If captions remain unavailable, the result is visibly labeled a description-only
+overview and has no requested chapters. These overviews are not summary-cached,
+so subsequent attempts can recover captions. Automatic Gemini video watching has
+been removed because it can exceed the hosting request window.
+
+Before production, verify nonempty caption-based results on a short video and a
+video longer than ten minutes in Preview. A successful description-only overview
+is not evidence that the proxy works. Production must wait for Preview review.
+
+Run regression tests from the repository root with:
+`python -m unittest discover -s tests -v`.

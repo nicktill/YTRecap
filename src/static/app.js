@@ -54,6 +54,7 @@
     videoId: null,
     video: null,
     markdown: "",
+    source: null,
     controller: null,
   };
 
@@ -384,6 +385,8 @@
     const isNewVideo = videoId !== state.videoId;
     state.videoId = videoId;
     state.markdown = "";
+    state.source = null;
+    $("#summary-source").hidden = true;
     els.formError.hidden = true;
     els.form.classList.remove("invalid");
     document.body.classList.add("has-result");
@@ -429,6 +432,10 @@
           const evt = JSON.parse(line);
           if (evt.type === "status") setStep(evt.step);
           else if (evt.type === "video") {
+            state.source = evt.source;
+            const sourceNote = $("#summary-source");
+            sourceNote.textContent = evt.demo ? "Example summary" : evt.source === "transcript" ? "Based on video captions" : "Description-only overview — captions were unavailable; this may miss the video’s content.";
+            sourceNote.hidden = false;
             fillVideoCard(evt.video);
             saveHistory(evt.video);
           } else if (evt.type === "delta") {
@@ -514,7 +521,7 @@
   // --- actions ---
   function exportMarkdown() {
     const v = state.video || {};
-    return `# ${v.title || "Video summary"}\n\n${v.channel ? `*${v.channel}* · ` : ""}https://www.youtube.com/watch?v=${state.videoId}\n\n${state.markdown.trim()}\n`;
+    return `# ${v.title || "Video summary"}\n\n${v.channel ? `*${v.channel}* · ` : ""}https://www.youtube.com/watch?v=${state.videoId}\n\n${state.source === "description" ? "> Description-only overview: captions were unavailable.\n\n" : ""}${state.markdown.trim()}\n`;
   }
 
   els.copy.addEventListener("click", async () => {
