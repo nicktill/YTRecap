@@ -1307,6 +1307,7 @@ body.has-result .composer-meta {
   }
 
   .player {
+    aspect-ratio: auto;
     height: 100%;
     min-height: 135px;
   }
@@ -1831,6 +1832,7 @@ body[data-variant="reader"] .video-card {
 }
 
 body[data-variant="reader"] .video-card .player {
+  aspect-ratio: auto;
   height: 100%;
   min-height: 146px;
 }
