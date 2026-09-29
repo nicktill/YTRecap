@@ -12,11 +12,11 @@ Landing page (dark mode):
 
 ![YTRecap landing page in dark mode: Watch less. Understand more.](docs/images/landing.jpg)
 
-A summary with key takeaways (these screenshots use the built-in sample, labeled "Example summary"):
+A real summary, built from the video's captions, with key takeaways and clickable timestamps:
 
-![YTRecap summary view in light mode](docs/images/result-light.jpg)
+![YTRecap summary with TL;DR and key takeaways](docs/images/result-top.jpg)
 
-![YTRecap summary view in dark mode](docs/images/result-dark.jpg)
+![YTRecap chapters with clickable timestamps](docs/images/result-chapters.jpg)
 
 ## Run locally
 
