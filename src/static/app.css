@@ -655,17 +655,48 @@ body.has-result .composer-meta {
 }
 
 .video-card,
-.summary-card {
+.summary-card,
+.chapters-card {
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
   background: var(--surface);
   box-shadow: var(--shadow-md);
 }
 
-.video-card {
+/* Left column: video card, then chapters. The column sticks as one unit and the
+   chapter list scrolls inside whatever height is left below the player. */
+.side {
   position: sticky;
   top: 84px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-height: calc(100vh - 100px);
+}
+
+.video-card {
+  flex: none;
   overflow: hidden;
+}
+
+.chapters-card {
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.chapters-card .summary {
+  padding: 4px 18px 14px;
+  font-size: 14px;
+}
+
+.chapters-card .sec-chapters li {
+  grid-template-columns: 58px 1fr;
+  gap: 10px;
+}
+
+.chapters-card .chapter-body span {
+  font-size: 13.5px;
 }
 
 .player {
@@ -1257,6 +1288,16 @@ body.has-result .composer-meta {
 @media (max-width: 900px) {
   .result {
     grid-template-columns: 1fr;
+  }
+
+  /* One column: video, summary, then chapters (same order as before). */
+  .side {
+    display: contents;
+  }
+
+  .chapters-card {
+    order: 3;
+    overflow: visible;
   }
 
   .video-card {

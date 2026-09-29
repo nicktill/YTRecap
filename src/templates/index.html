@@ -127,21 +127,27 @@
 
 
       <section class="result" id="result" hidden aria-live="polite">
-        <aside class="video-card">
-          <div class="player" id="player">
-            <img id="thumb" alt="" />
-            <button class="play-btn" id="play-btn" type="button" aria-label="Play video">
-              <svg><use href="#i-play" /></svg>
-            </button>
-          </div>
-          <div class="video-body">
-            <h2 class="video-title" id="video-title"><span class="skeleton" style="width: 90%"></span><span class="skeleton" style="width: 60%"></span></h2>
-            <p class="video-channel" id="video-channel"></p>
-            <div class="video-stats" id="video-stats"></div>
-            <div class="video-foot">
-              <a class="text-link" id="yt-link" target="_blank" rel="noopener">Open on YouTube<svg><use href="#i-external" /></svg></a>
+        <aside class="side">
+          <div class="video-card">
+            <div class="player" id="player">
+              <img id="thumb" alt="" />
+              <button class="play-btn" id="play-btn" type="button" aria-label="Play video">
+                <svg><use href="#i-play" /></svg>
+              </button>
+            </div>
+            <div class="video-body">
+              <h2 class="video-title" id="video-title"><span class="skeleton" style="width: 90%"></span><span class="skeleton" style="width: 60%"></span></h2>
+              <p class="video-channel" id="video-channel"></p>
+              <div class="video-stats" id="video-stats"></div>
+              <div class="video-foot">
+                <a class="text-link" id="yt-link" target="_blank" rel="noopener">Open on YouTube<svg><use href="#i-external" /></svg></a>
+              </div>
             </div>
           </div>
+
+          <section class="chapters-card" id="chapters-card" hidden>
+            <div class="summary" id="chapters"></div>
+          </section>
         </aside>
 
         <article class="summary-card">

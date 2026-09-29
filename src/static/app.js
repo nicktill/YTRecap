@@ -14,6 +14,8 @@
     result: $("#result"),
     progress: $("#progress"),
     summary: $("#summary"),
+    chapters: $("#chapters"),
+    chaptersCard: $("#chapters-card"),
     errorPanel: $("#error-panel"),
     errorMsg: $("#error-msg"),
     player: $("#player"),
@@ -221,7 +223,10 @@
 
   // Patch sections in place so each one animates in once instead of on every token.
   function renderSummary() {
-    const sections = parseSections(state.markdown).filter((s) => s.html);
+    const all = parseSections(state.markdown).filter((s) => s.html);
+    // Chapters live beside the video (under the player) so the summary stays short.
+    const chapters = all.find((s) => s.kind === "chapters");
+    const sections = all.filter((s) => s.kind !== "chapters");
     const nodes = els.summary.children;
     sections.forEach((sec, i) => {
       let node = nodes[i];
@@ -233,6 +238,20 @@
       if (node.innerHTML !== sec.html) node.innerHTML = sec.html;
     });
     while (nodes.length > sections.length) els.summary.lastElementChild.remove();
+
+    if (chapters) {
+      let node = els.chapters.firstElementChild;
+      if (!node) {
+        node = document.createElement("section");
+        els.chapters.appendChild(node);
+      }
+      node.className = "sec-chapters";
+      if (node.innerHTML !== chapters.html) node.innerHTML = chapters.html;
+      els.chaptersCard.hidden = false;
+    } else {
+      els.chapters.innerHTML = "";
+      els.chaptersCard.hidden = true;
+    }
   }
 
   let renderQueued = false;
@@ -299,10 +318,12 @@
   }
 
   $("#play-btn").addEventListener("click", () => playAt(0));
-  els.summary.addEventListener("click", (e) => {
-    const ts = e.target.closest(".ts");
-    if (ts) playAt(Number(ts.dataset.t));
-  });
+  [els.summary, els.chapters].forEach((el) =>
+    el.addEventListener("click", (e) => {
+      const ts = e.target.closest(".ts");
+      if (ts) playAt(Number(ts.dataset.t));
+    }),
+  );
 
   // --- progress steps ---
   const STEPS = ["video", "transcript", "writing"];
@@ -414,6 +435,8 @@
     els.progress.hidden = false;
     startHint();
     els.summary.innerHTML = "";
+    els.chapters.innerHTML = "";
+    els.chaptersCard.hidden = true;
     els.summary.classList.add("streaming");
     els.foot.hidden = true;
     els.submit.disabled = true;
