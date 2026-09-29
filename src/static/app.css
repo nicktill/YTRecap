@@ -304,11 +304,90 @@ svg {
    Hero
    ========================================================================== */
 .hero {
-  max-width: 720px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(360px, 0.78fr);
+  align-items: center;
+  gap: clamp(48px, 8vw, 112px);
+  max-width: 1080px;
   margin: 0 auto;
-  padding: clamp(56px, 15vh, 160px) 0 36px;
-  text-align: center;
+  padding: clamp(64px, 13vh, 132px) 0 54px;
 }
+
+.hero-copy {
+  min-width: 0;
+}
+
+.hero .eyebrow {
+  margin-bottom: 26px;
+}
+
+.hero-proof {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 28px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.proof-avatars {
+  display: inline-flex;
+  padding-left: 7px;
+}
+
+.proof-avatars i {
+  width: 22px;
+  height: 22px;
+  margin-left: -7px;
+  border: 2px solid var(--bg);
+  border-radius: 50%;
+  background: linear-gradient(145deg, #f2c4a7, #875345);
+}
+
+.proof-avatars i:nth-child(2) { background: linear-gradient(145deg, #d9b4a2, #5c3831); }
+.proof-avatars i:nth-child(3) { background: linear-gradient(145deg, #f0d4a2, #704a2f); }
+
+.hero-preview {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: var(--shadow-lg), 0 0 80px var(--glow);
+  transform: rotate(1.5deg);
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+
+.hero-preview:hover {
+  transform: rotate(0) translateY(-4px);
+  box-shadow: var(--shadow-lg), 0 16px 80px var(--glow);
+}
+
+.preview-top,
+.preview-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+}
+
+.preview-top .dot { display: inline-block; width: 7px; height: 7px; margin-right: 7px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 0 4px var(--accent-soft); }
+.preview-content { display: grid; grid-template-columns: 0.8fr 1fr; gap: 18px; margin: 20px 0 18px; }
+.preview-thumb { display: grid; place-items: center; min-height: 164px; border-radius: 14px; background: linear-gradient(145deg, #704b3a, #e3b082); color: white; }
+.preview-thumb svg { width: 28px; height: 28px; padding: 9px; box-sizing: content-box; border-radius: 50%; background: rgb(255 255 255 / 22%); fill: currentColor; stroke: none; }
+.preview-copy { display: flex; flex-direction: column; justify-content: center; gap: 10px; }
+.preview-kicker { color: var(--accent); font-family: var(--font-mono); font-size: 10px; letter-spacing: 0.12em; }
+.preview-copy strong { font-family: var(--font-serif); font-size: clamp(23px, 3vw, 32px); font-weight: 400; line-height: 0.98; }
+.preview-copy p { margin: 0; color: var(--muted); font-size: 12px; line-height: 1.45; }
+.preview-lines { display: flex; flex-direction: column; gap: 6px; }
+.preview-lines i { display: block; height: 4px; border-radius: 99px; background: var(--accent-line); }
+.preview-lines i:nth-child(2) { width: 78%; background: var(--border-strong); }
+.preview-lines i:nth-child(3) { width: 52%; background: var(--border-strong); }
+.preview-bottom b { color: var(--success); font-weight: 500; letter-spacing: 0.04em; }
 
 .eyebrow {
   display: inline-flex;
@@ -351,7 +430,7 @@ svg {
 
 .lede {
   max-width: 520px;
-  margin: 20px auto 0;
+  margin: 20px 0 0;
   color: var(--muted);
   font-size: clamp(16px, 2vw, 18px);
   line-height: 1.6;
@@ -1255,6 +1334,18 @@ body.has-result .composer-meta {
    Responsive
    ========================================================================== */
 @media (max-width: 900px) {
+  .hero {
+    grid-template-columns: 1fr;
+    gap: 34px;
+    max-width: 720px;
+    padding-top: clamp(56px, 10vh, 96px);
+  }
+
+  .hero-preview {
+    width: min(100%, 520px);
+    margin: 0 auto;
+  }
+
   .result {
     grid-template-columns: 1fr;
   }
