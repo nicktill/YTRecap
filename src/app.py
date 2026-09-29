@@ -17,19 +17,24 @@ load_dotenv()
 
 app = Flask(__name__)
 
-# AI providers, tried in order: Gemini (free key from aistudio.google.com) first,
-# then any OpenAI-compatible key (OPENAI_BASE_URL can point it elsewhere).
+# AI providers, tried in order: OpenAI first (fast and steady), then Gemini as a backup
+# (free key from aistudio.google.com; its free tier is often rate-limited or overloaded).
+# Short timeouts and no retries keep a stuck provider from eating Vercel's 60s limit;
+# the next provider is tried instead.
 GEMINI_KEY = os.environ.get("GEMINI_API_KEY")
 GEMINI_MODEL = os.environ.get("GEMINI_MODEL", "gemini-flash-latest")
 OPENAI_KEY = os.environ.get("OPENAI_KEY") or os.environ.get("OPENAI_API_KEY")
 OPENAI_MODEL = os.environ.get("OPENAI_MODEL", "gpt-4o-mini")
 YT_KEY = os.environ.get("YT_KEY")
 
+# Seconds: also the longest silence allowed between streamed chunks, so a hung stream
+# fails fast while a slow but steady one is fine.
+LLM_TIMEOUT = 12.0
 PROVIDERS = []  # (name, client, model)
-if GEMINI_KEY:
-    PROVIDERS.append(("gemini", OpenAI(api_key=GEMINI_KEY, base_url="https://generativelanguage.googleapis.com/v1beta/openai/", max_retries=1), GEMINI_MODEL))
 if OPENAI_KEY:
-    PROVIDERS.append(("openai", OpenAI(api_key=OPENAI_KEY, base_url=os.environ.get("OPENAI_BASE_URL")), OPENAI_MODEL))
+    PROVIDERS.append(("openai", OpenAI(api_key=OPENAI_KEY, base_url=os.environ.get("OPENAI_BASE_URL"), timeout=LLM_TIMEOUT, max_retries=0), OPENAI_MODEL))
+if GEMINI_KEY:
+    PROVIDERS.append(("gemini", OpenAI(api_key=GEMINI_KEY, base_url="https://generativelanguage.googleapis.com/v1beta/openai/", timeout=LLM_TIMEOUT, max_retries=0), GEMINI_MODEL))
 AI_MODEL = " -> ".join(m for _, _, m in PROVIDERS)
 # Demo mode streams a canned summary so the UI can be previewed without API keys.
 DEMO_MODE = os.environ.get("YTRECAP_DEMO") == "1" or not PROVIDERS

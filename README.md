@@ -2,7 +2,7 @@
 
 [YTRecap](https://ytrecap.org) turns YouTube captions into AI summaries, key takeaways, and clickable chapters. The Flask app streams results as they are generated and supports brief, standard, and detailed summaries, light/dark themes, and Markdown downloads.
 
-Captions are fetched with `youtube-transcript-api`, optionally through a residential proxy configured with `YT_PROXY_URL`. The YouTube Data API supplies metadata when `YT_KEY` is configured; otherwise, the app uses oEmbed for the title and channel. Gemini is tried first when configured, followed by an OpenAI-compatible provider.
+Captions are fetched with `youtube-transcript-api`, optionally through a residential proxy configured with `YT_PROXY_URL`. The YouTube Data API supplies metadata when `YT_KEY` is configured; otherwise, the app uses oEmbed for the title and channel. An OpenAI-compatible provider is tried first, with Gemini as a backup, each with short timeouts.
 
 When captions cannot be retrieved, a **description-only** result is visibly labeled and has no generated timestamp chapters. If there is no usable description either, the app reports that it cannot summarize the video. Demo mode shows a clearly labeled sample rather than fetching captions or calling an AI provider.
 
