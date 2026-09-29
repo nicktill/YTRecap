@@ -498,8 +498,9 @@
       typeof document.startViewTransition === "function" &&
       !matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (canMorph) {
-      const vt = document.startViewTransition(() => applyStart(true));
-      vt.finished.finally(() => document.documentElement.classList.remove("vt-active"));
+      // vt-active stays on until we return home; removing it earlier would restart
+      // the .result entrance animation and make the summary blink after the morph.
+      document.startViewTransition(() => applyStart(true));
     } else {
       applyStart(false);
     }
@@ -680,6 +681,7 @@
     state.controller?.abort();
     state.videoId = null;
     document.body.classList.remove("has-result");
+    document.documentElement.classList.remove("vt-active");
     els.result.hidden = true;
     els.input.value = "";
     document.title = "YTRecap — Summarize any YouTube video";
