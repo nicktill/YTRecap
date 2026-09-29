@@ -1630,3 +1630,133 @@ body.has-result .composer-field {
 }
 
 .source-note { margin: 1rem 1.5rem; color: var(--text-secondary, #888); font-size: .875rem; }
+
+/* Product polish: quieter chrome, stronger reading rhythm, and a clearer first action. */
+.topbar {
+  max-width: 1184px;
+  width: 100%;
+  margin: 0 auto;
+  padding-inline: clamp(20px, 4vw, 42px);
+}
+
+.hero {
+  padding-top: clamp(72px, 15vh, 148px);
+}
+
+.hero h1 {
+  max-width: 760px;
+  margin-inline: auto;
+  font-size: clamp(46px, 7vw, 78px);
+  letter-spacing: -0.055em;
+}
+
+.lede {
+  max-width: 560px;
+  color: var(--text-2);
+}
+
+.composer {
+  max-width: 760px;
+}
+
+.composer-field {
+  min-height: 68px;
+  padding: 9px 9px 9px 20px;
+  border-radius: 18px;
+  box-shadow: 0 16px 40px -20px rgba(24, 20, 14, 0.28), var(--shadow-sm);
+}
+
+.composer-field:focus-within {
+  box-shadow: 0 16px 40px -20px rgba(24, 20, 14, 0.28), 0 0 0 4px var(--accent-soft);
+}
+
+.composer input {
+  height: 48px;
+  font-size: 16px;
+}
+
+.primary-btn {
+  height: 48px;
+  padding-inline: 20px;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.privacy-note {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin: 18px auto 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.privacy-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--success);
+}
+
+body.has-result .composer {
+  max-width: 920px;
+}
+
+body.has-result .privacy-note {
+  display: none;
+}
+
+.summary-card {
+  border-radius: 16px;
+  box-shadow: 0 12px 32px -20px rgba(24, 20, 14, 0.24), var(--shadow-sm);
+}
+
+.summary {
+  max-width: 780px;
+  margin-inline: auto;
+  padding-inline: clamp(24px, 5vw, 56px);
+  font-size: 16px;
+  line-height: 1.78;
+}
+
+.summary h3 {
+  margin-top: 34px;
+}
+
+.sec-tldr {
+  margin-inline: -10px;
+  padding: 22px 24px;
+}
+
+@media (max-width: 640px) {
+  .topbar {
+    padding-inline: 16px;
+  }
+
+  .hero {
+    padding-top: 52px;
+  }
+
+  .hero h1 {
+    font-size: clamp(42px, 13vw, 58px);
+  }
+
+  .composer-field {
+    min-height: 0;
+    padding: 7px;
+  }
+
+  .privacy-note {
+    text-align: center;
+  }
+
+  .summary {
+    padding-inline: 20px;
+    font-size: 15.5px;
+  }
+
+  .sec-tldr {
+    margin-inline: 0;
+  }
+}

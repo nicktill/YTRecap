@@ -70,7 +70,7 @@
         <a class="icon-btn" href="https://github.com/nicktill/ytrecap" target="_blank" rel="noopener" aria-label="View source on GitHub">
           <svg><use href="#i-github" /></svg>
         </a>
-        <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle dark mode">
+        <button class="icon-btn" id="theme-toggle" type="button" aria-label="Toggle dark mode" data-tip="Theme">
           <svg class="only-light"><use href="#i-moon" /></svg>
           <svg class="only-dark"><use href="#i-sun" /></svg>
         </button>
@@ -79,12 +79,12 @@
 
     <main class="shell">
       <section class="hero" id="hero">
-        <p class="eyebrow intro" style="--d: 0.05s"><span class="dot"></span>AI summaries for YouTube</p>
+        <p class="eyebrow intro" style="--d: 0.05s"><span class="dot"></span>Clarity, without the watch time</p>
         <h1>
-          <span class="line"><span class="word" style="--d: 0.15s">Watch</span> <span class="word" style="--d: 0.25s">less.</span></span>
-          <em class="line"><span class="word" style="--d: 0.4s">Understand</span> <span class="word" style="--d: 0.52s">more.</span></em>
+          <span class="line"><span class="word" style="--d: 0.15s">Understand</span> <span class="word" style="--d: 0.25s">more.</span></span>
+          <em class="line"><span class="word" style="--d: 0.4s">Watch</span> <span class="word" style="--d: 0.52s">less.</span></em>
         </h1>
-        <p class="lede intro" style="--d: 0.7s">Paste any YouTube link and get the key ideas, a clear summary, and clickable chapters in seconds.</p>
+        <p class="lede intro" style="--d: 0.7s">Paste a YouTube video and get the ideas that matter — organized, readable, and ready in seconds.</p>
       </section>
 
       <form class="composer intro" id="composer" style="--d: 0.82s" autocomplete="off" novalidate>
@@ -111,11 +111,12 @@
       </form>
 
       <section class="examples intro" id="examples" style="--d: 0.95s">
-        <span class="examples-label">Try an example</span>
+        <span class="examples-label">Start with an example</span>
         <button class="chip" type="button" data-example="UF8uR6Z6KLc">Steve Jobs at Stanford</button>
         <button class="chip" type="button" data-example="iG9CE55wbtY">Schools &amp; creativity</button>
         <button class="chip" type="button" data-example="aircAruvnKk">Neural networks, explained</button>
       </section>
+      <p class="privacy-note intro" style="--d: 1.02s"><span class="privacy-dot"></span>No account needed · summaries stay in your browser history</p>
 
       <section class="recent" id="recent" hidden>
         <div class="recent-head">
