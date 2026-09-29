@@ -1849,7 +1849,11 @@ body[data-variant="reader"] .chapters-card .summary {
 }
 
 body[data-variant="reader"] .chapters-card h3 {
-  margin-bottom: 8px;
+  margin: 0 0 8px;
+}
+
+body[data-variant="reader"] .chapters-card section {
+  padding-top: 0;
 }
 
 body[data-variant="reader"] .chapters-card .sec-chapters ul {
