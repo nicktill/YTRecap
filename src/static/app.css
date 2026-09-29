@@ -1946,6 +1946,25 @@ body.has-result .composer-field {
   .examples { justify-content: center; margin-bottom: 52px; }
 }
 
+@media (min-width: 801px) {
+  .topbar { padding-top: 16px; padding-bottom: 16px; }
+  .hero {
+    min-height: 420px;
+    padding-top: 54px;
+    padding-bottom: 112px;
+  }
+  .hero::before { margin-bottom: 22px; }
+  .hero h1 { font-size: clamp(58px, 6.7vw, 102px); }
+  .lede { margin-top: 22px; font-size: 17px; }
+  .hero-proof { margin-top: 24px; }
+  .hero-preview { top: 72px; }
+  .preview-body { margin-top: 14px; margin-bottom: 14px; }
+  .preview-thumb { min-height: 150px; }
+  .composer { margin-top: -72px; }
+  .composer::before { margin-bottom: 7px; }
+  .examples { margin-top: 18px; margin-bottom: 24px; }
+}
+
 @media (max-width: 480px) {
   .hero { padding-top: 46px; }
   .hero h1 { font-size: clamp(52px, 16vw, 76px); }
