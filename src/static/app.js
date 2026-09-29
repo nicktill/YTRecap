@@ -314,6 +314,24 @@
     });
   }
 
+  // Gentle expectation-setting while waiting; stops as soon as text starts or an error shows.
+  let hintTimers = [];
+  function startHint() {
+    stopHint();
+    const hint = $("#progress-hint");
+    const say = (text) => (hint.textContent = text);
+    say("Usually takes around 10 seconds.");
+    hintTimers = [
+      setTimeout(() => say("Still working. Longer videos take a little more time."), 15000),
+      setTimeout(() => say("Almost there. This one is taking longer than usual."), 35000),
+    ];
+  }
+  function stopHint() {
+    hintTimers.forEach(clearTimeout);
+    hintTimers = [];
+    $("#progress-hint").textContent = "";
+  }
+
   function setActionsEnabled(on) {
     [els.copy, els.download, els.share].forEach((b) => (b.disabled = !on));
   }
@@ -353,6 +371,7 @@
   }
 
   function showError(message) {
+    stopHint();
     els.progress.hidden = true;
     els.errorMsg.textContent = message;
     els.errorPanel.hidden = false;
@@ -393,6 +412,7 @@
     els.result.hidden = false;
     els.errorPanel.hidden = true;
     els.progress.hidden = false;
+    startHint();
     els.summary.innerHTML = "";
     els.summary.classList.add("streaming");
     els.foot.hidden = true;
@@ -439,6 +459,7 @@
             fillVideoCard(evt.video);
             saveHistory(evt.video);
           } else if (evt.type === "delta") {
+            stopHint();
             els.progress.hidden = true;
             state.markdown += evt.text;
             scheduleRender();
@@ -446,7 +467,7 @@
           else if (evt.type === "done") finished = true;
         }
       }
-      if (!finished) throw new Error("The connection was interrupted. Please try again.");
+      if (!finished) throw new Error("That took longer than expected and got cut off. Please try again. It is usually quicker the second time.");
       els.summary.classList.remove("streaming");
       renderSummary();
       renderFooter();
