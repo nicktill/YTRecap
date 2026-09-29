@@ -889,6 +889,16 @@ body.has-result .composer-meta {
     center / 12px no-repeat;
 }
 
+.progress-hint {
+  min-height: 1.4em;
+  margin: 4px 0 0;
+  padding: 0 clamp(20px, 4vw, 40px) 8px 
+    calc(clamp(20px, 4vw, 40px) + 30px);
+  color: var(--muted);
+  font-size: 13px;
+  transition: opacity 0.3s;
+}
+
 /* Rendered summary */
 .summary {
   padding: 8px clamp(20px, 4vw, 40px) 24px;
