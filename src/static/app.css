@@ -3,26 +3,26 @@
    ========================================================================== */
 :root {
   color-scheme: light;
-  --bg: #fbfaf8;
-  --surface: #ffffff;
-  --surface-2: #f4f2ee;
-  --surface-3: #ebe8e2;
-  --border: rgba(24, 20, 14, 0.08);
-  --border-strong: rgba(24, 20, 14, 0.14);
-  --text: #17150f;
-  --text-2: #4a463e;
-  --muted: #7a756b;
-  --accent: #e5362b;
-  --accent-hover: #cf2c22;
-  --accent-soft: rgba(229, 54, 43, 0.08);
-  --accent-line: rgba(229, 54, 43, 0.22);
-  --on-accent: #ffffff;
-  --success: #1f8a4c;
-  --shadow-sm: 0 1px 2px rgba(24, 20, 14, 0.05);
-  --shadow-md: 0 1px 2px rgba(24, 20, 14, 0.04), 0 8px 24px -8px rgba(24, 20, 14, 0.1);
-  --shadow-lg: 0 2px 4px rgba(24, 20, 14, 0.03), 0 24px 48px -16px rgba(24, 20, 14, 0.16);
-  --glow: rgba(229, 54, 43, 0.12);
-  --grid-dot: rgba(24, 20, 14, 0.07);
+  --bg: #f5f1ea;
+  --surface: #fffdf9;
+  --surface-2: #ebe5dc;
+  --surface-3: #ded5c8;
+  --border: rgba(41, 34, 25, 0.12);
+  --border-strong: rgba(41, 34, 25, 0.2);
+  --text: #292219;
+  --text-2: #62594d;
+  --muted: #8d8274;
+  --accent: #d84a2f;
+  --accent-hover: #b83c26;
+  --accent-soft: rgba(216, 74, 47, 0.11);
+  --accent-line: rgba(216, 74, 47, 0.3);
+  --on-accent: #fffaf3;
+  --success: #477a5a;
+  --shadow-sm: 0 1px 2px rgba(41, 34, 25, 0.06);
+  --shadow-md: 0 12px 30px -18px rgba(41, 34, 25, 0.28);
+  --shadow-lg: 0 22px 60px -24px rgba(41, 34, 25, 0.3);
+  --glow: rgba(216, 74, 47, 0.15);
+  --grid-dot: rgba(41, 34, 25, 0.08);
 
   --font-sans: "Geist", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
   --font-serif: "Instrument Serif", ui-serif, Georgia, serif;
@@ -182,8 +182,9 @@ svg {
   z-index: -1;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 60% 40% at 50% -5%, var(--glow), transparent 70%),
-    radial-gradient(var(--grid-dot) 1px, transparent 1px) 0 0 / 22px 22px;
+    radial-gradient(ellipse 55% 42% at 20% 2%, var(--glow), transparent 72%),
+    radial-gradient(ellipse 50% 35% at 88% 24%, rgba(205, 174, 126, 0.14), transparent 72%),
+    radial-gradient(var(--grid-dot) 1px, transparent 1px) 0 0 / 24px 24px;
   -webkit-mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 75%);
   mask-image: linear-gradient(to bottom, #000 0%, #000 35%, transparent 75%);
 }
@@ -236,7 +237,19 @@ svg {
 .topbar-actions {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
+}
+
+.topbar-link {
+  padding: 7px 10px;
+  color: var(--text-2);
+  font-size: 13px;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+
+.topbar-link:hover {
+  color: var(--accent);
 }
 
 .demo-pill {
@@ -304,10 +317,20 @@ svg {
    Hero
    ========================================================================== */
 .hero {
-  max-width: 720px;
+  max-width: 860px;
   margin: 0 auto;
-  padding: clamp(56px, 15vh, 160px) 0 36px;
+  padding: clamp(56px, 13vh, 132px) 0 28px;
   text-align: center;
+}
+
+.hero::before {
+  content: "";
+  display: block;
+  width: 72px;
+  height: 1px;
+  margin: 0 auto 28px;
+  background: var(--accent);
+  opacity: 0.7;
 }
 
 .eyebrow {
@@ -350,12 +373,36 @@ svg {
 }
 
 .lede {
-  max-width: 520px;
-  margin: 20px auto 0;
-  color: var(--muted);
-  font-size: clamp(16px, 2vw, 18px);
-  line-height: 1.6;
+  max-width: 590px;
+  margin: 24px auto 0;
+  color: var(--text-2);
+  font-size: clamp(16px, 2vw, 19px);
+  line-height: 1.55;
   text-wrap: pretty;
+}
+
+.hero-proof {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px 22px;
+  margin-top: 26px;
+  color: var(--muted);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+}
+
+.hero-proof span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.hero-proof b {
+  color: var(--accent);
+  font-weight: 500;
 }
 
 /* ==========================================================================
