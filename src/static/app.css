@@ -765,6 +765,14 @@ body.has-result .composer-meta {
   padding: 18px 20px 20px;
 }
 
+/* Desktop: reserve room for the title, channel and stats so the card doesn't jump
+   when the video details arrive. */
+@media (min-width: 901px) {
+  .video-body {
+    min-height: 206px;
+  }
+}
+
 .video-title {
   margin: 0;
   font-size: 17px;
@@ -838,7 +846,8 @@ body.has-result .composer-meta {
 
 /* Summary card */
 .summary-card {
-  min-height: 420px;
+  /* at least as tall as the loading state, so the card never shrinks when text arrives */
+  min-height: 470px;
   padding: 0 0 8px;
 }
 
@@ -940,6 +949,12 @@ body.has-result .composer-meta {
 
 .summary:empty {
   display: none;
+}
+
+/* The first section replaces the loading placeholder, so it appears instantly;
+   fading it in from nothing reads as a blink. Later sections still fade up. */
+.summary section:first-child {
+  animation: none;
 }
 
 .summary section {

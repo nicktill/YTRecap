@@ -239,6 +239,12 @@
     });
     while (nodes.length > sections.length) els.summary.lastElementChild.remove();
 
+    // Swap the loading steps for real content in the same frame, never leaving a blank card.
+    if (sections.length && !els.progress.hidden) {
+      stopHint();
+      els.progress.hidden = true;
+    }
+
     if (chapters) {
       let node = els.chapters.firstElementChild;
       if (!node) {
@@ -542,8 +548,6 @@
             fillVideoCard(evt.video);
             saveHistory(evt.video);
           } else if (evt.type === "delta") {
-            stopHint();
-            els.progress.hidden = true;
             state.markdown += evt.text;
             scheduleRender();
           } else if (evt.type === "error") throw new Error(evt.message);
