@@ -1693,9 +1693,19 @@ body.has-result .composer-field {
 .hero {
   position: relative;
   max-width: none;
-  min-height: 520px;
-  padding: clamp(70px, 10vh, 112px) 52% 56px 0;
+  min-height: 510px;
+  padding: clamp(70px, 10vh, 112px) 52% 146px 0;
   text-align: left;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -10vw;
+  bottom: 0;
+  left: -10vw;
+  height: 1px;
+  background: var(--border);
 }
 
 .hero::before {
@@ -1869,7 +1879,17 @@ body.has-result .composer-field {
   position: relative;
   z-index: 2;
   max-width: 820px;
-  margin: -4px auto 0 0;
+  margin: -92px auto 0 0;
+}
+
+.composer::before {
+  content: "START WITH A VIDEO";
+  display: block;
+  margin: 0 0 11px 6px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 10px;
+  letter-spacing: .12em;
 }
 
 .composer-field {
@@ -1913,14 +1933,16 @@ body.has-result .composer-field {
   .shell { width: min(100% - 32px, 620px); }
   .topbar { padding-inline: 16px; }
   .topbar-link { display: none; }
-  .hero { min-height: auto; padding: 64px 0 28px; text-align: center; }
+  .hero { min-height: auto; padding: 64px 0 70px; text-align: center; }
+  .hero::after { right: 0; left: 0; }
   .hero::before { margin-inline: auto; }
   .hero h1 { font-size: clamp(58px, 15vw, 92px); }
   .hero h1 em { margin-left: 0; }
   .lede { margin-inline: auto; }
   .hero-proof { justify-content: center; }
   .hero-preview { position: relative; top: auto; right: auto; width: 100%; max-width: 520px; margin: 54px auto 0; transform: rotate(1.5deg); }
-  .composer { margin: 26px auto 0; }
+  .composer { margin: -18px auto 0; }
+  .composer::before { margin-left: 0; text-align: left; }
   .examples { justify-content: center; margin-bottom: 52px; }
 }
 
