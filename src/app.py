@@ -300,32 +300,43 @@ def api_summarize():
     )
 
 
-@app.route("/__timing")
-def timing():
+@app.route("/__bench")
+def bench():
+    """Temporary: per-stage timing of the real pipeline for one video."""
     import captions as cp
     vid = request.args.get("v", "W07V7ljVVjU")
-    out, t0 = {}, time.time()
-    def lap(k):
-        out[k] = round(time.time() - t0, 2)
+    length = request.args.get("len", "standard")
+    want = request.args.get("provider")
+    out, t0 = {"video": vid, "len": length}, time.time()
     try:
-        v = fetch_video_info(vid); lap("metadata_done")
+        v = fetch_video_info(vid)
     except Exception as e:
         out["metadata_error"] = type(e).__name__
         v = {"title": "T", "channel": "C", "description": "d"}
+    out["metadata_secs"] = round(time.time() - t0, 2)
     cp._CACHE.entries.clear()
     t1 = time.time()
-    tr, cl = fetch_transcript(vid)
-    out["captions_secs"] = round(time.time() - t1, 2); out["caption_chars"] = len(tr or ""); lap("captions_done")
-    name, client, model = PROVIDERS[0]
-    t2 = time.time(); first = None; n = 0
-    for chunk in client.chat.completions.create(model=model, temperature=0.4, stream=True,
-            messages=[{"role": "system", "content": SYSTEM_PROMPT},
-                      {"role": "user", "content": build_prompt(v, tr, request.args.get("len", "standard"))}]):
-        if chunk.choices and chunk.choices[0].delta.content:
-            n += len(chunk.choices[0].delta.content)
-            if first is None: first = time.time() - t2
-    out["llm"] = name + ":" + model; out["llm_first_token_secs"] = round(first or -1, 2)
-    out["llm_total_secs"] = round(time.time() - t2, 2); out["summary_chars"] = n; lap("total")
+    tr, _ = fetch_transcript(vid)
+    out["captions_secs"] = round(time.time() - t1, 2); out["caption_chars"] = len(tr or "")
+    prompt = build_prompt(v, tr, length)
+    for name, client, model in PROVIDERS:
+        if want and name != want:
+            continue
+        t2 = time.time(); first = None; n = 0
+        try:
+            for chunk in client.chat.completions.create(model=model, temperature=0.4, stream=True,
+                    messages=[{"role": "system", "content": SYSTEM_PROMPT}, {"role": "user", "content": prompt}]):
+                if chunk.choices and chunk.choices[0].delta.content:
+                    n += len(chunk.choices[0].delta.content)
+                    if first is None:
+                        first = time.time() - t2
+            out.update(llm=name + ":" + model, llm_first_token_secs=round(first or -1, 2),
+                       llm_total_secs=round(time.time() - t2, 2), summary_chars=n)
+            break
+        except Exception as e:
+            out.setdefault("llm_failures", []).append(f"{name}:{type(e).__name__}:{round(time.time() - t2, 1)}s")
+    out["total_secs"] = round(time.time() - t0, 2)
+    app.logger.warning("BENCH %s", json.dumps(out))
     return jsonify(out)
 
 
