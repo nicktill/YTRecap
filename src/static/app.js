@@ -382,6 +382,46 @@
     summarize(item.dataset.id);
   });
 
+  // --- layout variants (prototype): ?layout=reader | tabs ---
+  const layoutParam = new URLSearchParams(location.search).get("layout");
+  const variant = ["reader", "tabs"].includes(layoutParam) ? layoutParam : null;
+  const layoutQuery = variant ? `&layout=${variant}` : "";
+  if (variant) document.body.dataset.variant = variant;
+  if (variant === "tabs") {
+    const tabs = $("#view-tabs");
+    tabs.hidden = false;
+    els.result.dataset.tab = "overview";
+    tabs.addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-tab]");
+      if (!b) return;
+      els.result.dataset.tab = b.dataset.tab;
+      $$("button", tabs).forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+    });
+  }
+
+  // --- "keep going": recent videos + a nudge to summarize another ---
+  function renderNextUp() {
+    const others = store.get("history", []).filter((v) => v.id !== state.videoId).slice(0, 3);
+    $("#next-list").innerHTML = others
+      .map(
+        (v) =>
+          `<button class="next-item" type="button" data-id="${escapeHtml(v.id)}"><img src="https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/mqdefault.jpg" alt="" loading="lazy" onerror="this.style.visibility='hidden'" /><span>${escapeHtml(v.title)}</span></button>`,
+      )
+      .join("");
+    $("#next-up").hidden = false;
+  }
+  $("#next-list").addEventListener("click", (e) => {
+    const item = e.target.closest(".next-item");
+    if (!item) return;
+    els.input.value = `https://www.youtube.com/watch?v=${item.dataset.id}`;
+    summarize(item.dataset.id);
+  });
+  $("#another-btn").addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    els.input.value = "";
+    els.input.focus();
+  });
+
   // --- main flow ---
   function showFormError(message) {
     els.formError.textContent = message;
@@ -429,23 +469,42 @@
     $("#summary-source").hidden = true;
     els.formError.hidden = true;
     els.form.classList.remove("invalid");
-    document.body.classList.add("has-result");
-    els.result.hidden = false;
-    els.errorPanel.hidden = true;
-    els.progress.hidden = false;
-    startHint();
-    els.summary.innerHTML = "";
-    els.chapters.innerHTML = "";
-    els.chaptersCard.hidden = true;
-    els.summary.classList.add("streaming");
-    els.foot.hidden = true;
-    els.submit.disabled = true;
-    els.submit.classList.add("loading");
-    setActionsEnabled(false);
-    setStep("video");
-    if (isNewVideo) resetVideoCard(videoId);
+    const applyStart = (animated) => {
+      // The shared-element morph replaces the entrance animation, so switch that off.
+      if (animated) document.documentElement.classList.add("vt-active");
+      document.body.classList.add("has-result");
+      els.result.hidden = false;
+      els.errorPanel.hidden = true;
+      els.progress.hidden = false;
+      startHint();
+      els.summary.innerHTML = "";
+      els.chapters.innerHTML = "";
+      els.chaptersCard.hidden = true;
+      $("#next-up").hidden = true;
+      if (els.result.dataset.tab) {
+        els.result.dataset.tab = "overview";
+        $$("button", $("#view-tabs")).forEach((b) => b.setAttribute("aria-checked", String(b.dataset.tab === "overview")));
+      }
+      els.summary.classList.add("streaming");
+      els.foot.hidden = true;
+      els.submit.disabled = true;
+      els.submit.classList.add("loading");
+      setActionsEnabled(false);
+      setStep("video");
+      if (isNewVideo) resetVideoCard(videoId);
+    };
+    const canMorph =
+      !document.body.classList.contains("has-result") &&
+      typeof document.startViewTransition === "function" &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (canMorph) {
+      const vt = document.startViewTransition(() => applyStart(true));
+      vt.finished.finally(() => document.documentElement.classList.remove("vt-active"));
+    } else {
+      applyStart(false);
+    }
 
-    const shareUrl = `/watch?v=${videoId}`;
+    const shareUrl = `/watch?v=${videoId}${layoutQuery}`;
     if (location.pathname + location.search !== shareUrl) history.pushState({ videoId }, "", shareUrl);
 
     try {
@@ -494,6 +553,7 @@
       els.summary.classList.remove("streaming");
       renderSummary();
       renderFooter();
+      renderNextUp();
       setActionsEnabled(true);
     } catch (err) {
       if (err.name === "AbortError") return;

@@ -164,6 +164,11 @@
             </div>
           </header>
 
+          <div class="segmented segmented-sm view-tabs" id="view-tabs" role="radiogroup" aria-label="Summary view" hidden>
+            <button type="button" role="radio" aria-checked="true" data-tab="overview">Overview</button>
+            <button type="button" role="radio" aria-checked="false" data-tab="full">Full summary</button>
+          </div>
+
           <div class="progress-wrap" id="progress">
             <ol class="progress">
               <li data-step="video">Fetching video details</li>
@@ -187,6 +192,12 @@
             <p class="foot-note">AI-generated, so double-check anything important.</p>
             <button class="ghost-btn" id="regen-btn" type="button"><svg><use href="#i-refresh" /></svg>Regenerate</button>
           </footer>
+
+          <div class="next-up" id="next-up" hidden>
+            <p class="next-title">Keep going</p>
+            <div class="next-list" id="next-list"></div>
+            <button class="ghost-btn" id="another-btn" type="button"><svg><use href="#i-arrow" /></svg>Summarize another video</button>
+          </div>
 
           <div class="error-panel" id="error-panel" hidden>
             <svg><use href="#i-alert" /></svg>
