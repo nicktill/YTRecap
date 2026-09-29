@@ -54,6 +54,10 @@
         <symbol id="i-sparkle" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z" /><path d="M19 16l.7 1.8 1.8.7-1.8.7L19 21l-.7-1.8-1.8-.7 1.8-.7z" /></symbol>
         <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></symbol>
         <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></symbol>
+        <symbol id="i-cc" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3.5" /><path d="M10.4 10.3a2.3 2.3 0 1 0 0 3.4M16.4 10.3a2.3 2.3 0 1 0 0 3.4" /></symbol>
+        <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z" /></symbol>
+        <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z" /><path d="M14 3v4h4M10 12h5M10 16h5" /></symbol>
+        <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></symbol>
         <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></symbol>
       </defs>
     </svg>
@@ -140,6 +144,7 @@
               <p class="video-channel" id="video-channel"></p>
               <div class="video-stats" id="video-stats"></div>
               <div class="video-foot">
+                <span class="cc-badge" id="cc-badge" role="img" aria-label="Closed captions" hidden><svg><use href="#i-cc" /></svg></span>
                 <a class="text-link" id="yt-link" target="_blank" rel="noopener">Open on YouTube<svg><use href="#i-external" /></svg></a>
               </div>
             </div>
@@ -152,6 +157,7 @@
 
         <article class="summary-card">
           <header class="summary-head">
+            <button class="length-trigger" id="length-trigger" type="button" aria-haspopup="true" aria-expanded="false"><span id="length-label">Standard</span><svg><use href="#i-chevron" /></svg></button>
             <div class="segmented segmented-sm" role="radiogroup" aria-label="Summary length" data-length-group>
               <button type="button" role="radio" data-length="brief">Brief</button>
               <button type="button" role="radio" data-length="standard">Standard</button>
@@ -164,9 +170,10 @@
             </div>
           </header>
 
-          <div class="segmented segmented-sm view-tabs" id="view-tabs" role="radiogroup" aria-label="Summary view" hidden>
-            <button type="button" role="radio" aria-checked="true" data-tab="overview">Overview</button>
-            <button type="button" role="radio" aria-checked="false" data-tab="full">Full summary</button>
+          <div class="view-tabs" id="view-tabs" role="tablist" aria-label="Summary sections" hidden>
+            <button type="button" role="tab" aria-selected="true" data-tab="overview"><svg><use href="#i-bolt" /></svg><span>Overview</span></button>
+            <button type="button" role="tab" aria-selected="false" data-tab="full"><svg><use href="#i-doc" /></svg><span>Full summary</span></button>
+            <i class="tab-indicator" aria-hidden="true"></i>
           </div>
 
           <div class="progress-wrap" id="progress">

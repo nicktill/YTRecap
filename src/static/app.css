@@ -1858,118 +1858,219 @@ html.vt-active .result { animation: none; }
 }
 
 /* ==========================================================================
-   Layout variants (prototype, opt-in with ?layout=reader | tabs)
+   Closed-captions marker (owner-only signal: present when captions were used)
    ========================================================================== */
-
-/* Reader: one centered column, video header on top, chapters as a jump strip. */
-body[data-variant="reader"] .result {
-  grid-template-columns: minmax(0, 780px);
-  justify-content: center;
-  gap: 16px;
+.cc-badge {
+  display: inline-flex;
+  align-items: center;
+  color: var(--muted);
+  opacity: 0.85;
 }
 
-body[data-variant="reader"] .side {
-  display: contents;
+.cc-badge svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
-body[data-variant="reader"] .video-card {
-  order: 1;
-  position: static;
-  display: grid;
-  grid-template-columns: minmax(0, 260px) 1fr;
+.cc-badge[hidden] {
+  display: none;
 }
 
-body[data-variant="reader"] .video-card .player {
-  aspect-ratio: auto;
-  height: 100%;
-  min-height: 146px;
+/* ==========================================================================
+   Content tabs (prototype, opt-in: ?tabs=underline | icons | menu).
+   Tabs choose WHAT you read (Overview / Full summary); the Brief / Standard /
+   Detailed control chooses HOW MUCH. Tabs get a different visual language
+   (text + sliding indicator) so the two are never confused.
+   ========================================================================== */
+.view-tabs,
+.length-trigger {
+  display: none;
 }
 
-body[data-variant="reader"] .chapters-card {
-  order: 2;
-  overflow: visible;
-  border-radius: var(--radius);
-  box-shadow: var(--shadow-sm);
-}
-
-body[data-variant="reader"] .chapters-card .summary {
-  padding: 12px 16px 14px;
-}
-
-body[data-variant="reader"] .chapters-card h3 {
-  margin: 0 0 8px;
-}
-
-body[data-variant="reader"] .chapters-card section {
-  padding-top: 0;
-}
-
-body[data-variant="reader"] .chapters-card .sec-chapters ul {
+body[data-tabs] .view-tabs {
+  position: relative;
   display: flex;
-  gap: 8px;
-  margin: 0;
-  overflow-x: auto;
-  padding: 2px 2px 6px;
-  scroll-snap-type: x proximity;
+  gap: 22px;
+  padding: 0 clamp(20px, 4vw, 40px);
+  border-bottom: 1px solid var(--border);
 }
 
-body[data-variant="reader"] .chapters-card .sec-chapters li {
-  display: flex;
-  flex: 0 0 auto;
+.view-tabs button,
+.length-trigger {
+  appearance: none;
+  background: transparent;
+  font: inherit;
+  cursor: pointer;
+}
+
+.view-tabs button {
+  border: 0;
+  padding: 0;
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 4px 12px 4px 4px;
-  border: 1px solid var(--border);
-  border-radius: 999px;
-  background: var(--surface);
-  scroll-snap-align: start;
+  height: 46px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.2s;
 }
 
-body[data-variant="reader"] .chapters-card .sec-chapters li + li {
-  border-top: 1px solid var(--border);
+.view-tabs button:hover {
+  color: var(--text);
 }
 
-body[data-variant="reader"] .chapters-card .chapter-body span {
+.view-tabs button[aria-selected="true"] {
+  color: var(--text);
+}
+
+.view-tabs button svg {
+  display: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.tab-indicator {
+  position: absolute;
+  left: 0;
+  bottom: -1px;
+  width: var(--w, 0);
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--accent);
+  transform: translateX(var(--x, 0));
+  transition: transform 0.4s var(--ease-out), width 0.4s var(--ease-out);
+}
+
+/* Which sections each tab shows */
+body[data-tabs] .result[data-tab="overview"] .summary .sec-body,
+body[data-tabs] .result[data-tab="full"] .summary .sec-tldr,
+body[data-tabs] .result[data-tab="full"] .summary .sec-takeaways {
   display: none;
 }
 
-body[data-variant="reader"] .chapters-card .chapter-body strong {
-  margin: 0;
-  font-size: 13px;
-  white-space: nowrap;
+/* Style 1: underline. Quiet text tabs with a sliding red underline. */
+
+/* Style 2: icons. Icon + label chips in the accent colour (tinted, not grey). */
+body[data-tabs="icons"] .view-tabs {
+  gap: 6px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-bottom: 0;
 }
 
-body[data-variant="reader"] .summary-card {
-  order: 3;
+body[data-tabs="icons"] .view-tabs button {
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 10px;
 }
 
-body[data-variant="reader"] .summary {
-  font-size: 16.5px;
-  line-height: 1.75;
+body[data-tabs="icons"] .view-tabs button svg {
+  display: block;
 }
 
-/* Tabs: Overview (TL;DR + takeaways) vs Full summary, so nothing needs a long scroll. */
-.view-tabs {
-  display: none;
+body[data-tabs="icons"] .view-tabs button[aria-selected="true"] {
+  color: var(--accent);
 }
 
-body[data-variant="tabs"] .view-tabs {
+body[data-tabs="icons"] .tab-indicator {
+  top: var(--y, 12px);
+  bottom: auto;
+  height: var(--h, 36px);
+  border-radius: 10px;
+  background: var(--accent-soft);
+  box-shadow: inset 0 0 0 1px var(--accent-line);
+}
+
+/* Style 3: menu. One toolbar: tabs left; length becomes a compact menu on the right. */
+body[data-tabs="menu"] .summary-head {
+  align-items: stretch;
+  padding: 0 14px 0 clamp(20px, 4vw, 40px);
+}
+
+body[data-tabs="menu"] .summary-head .view-tabs {
+  padding: 0;
+  border-bottom: 0;
+}
+
+body[data-tabs="menu"] .summary-head .view-tabs button {
+  height: 52px;
+}
+
+body[data-tabs="menu"] .summary-head .summary-actions {
+  align-items: center;
+  margin-left: auto;
+}
+
+body[data-tabs="menu"] .length-trigger {
   display: inline-flex;
-  margin: 4px clamp(20px, 4vw, 40px) 0;
+  align-items: center;
+  align-self: center;
+  gap: 6px;
+  height: 32px;
+  margin-left: auto;
+  padding: 0 8px 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text-2);
+  font-size: 13px;
+  font-weight: 500;
+  transition: border-color 0.2s, color 0.2s;
 }
 
-body[data-variant="tabs"] .result[data-tab="overview"] .summary .sec-body,
-body[data-variant="tabs"] .result[data-tab="full"] .summary .sec-tldr,
-body[data-variant="tabs"] .result[data-tab="full"] .summary .sec-takeaways {
+body[data-tabs="menu"] .length-trigger:hover,
+body[data-tabs="menu"] .length-trigger[aria-expanded="true"] {
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+body[data-tabs="menu"] .length-trigger svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+body[data-tabs="menu"] .summary-head .summary-actions {
+  margin-left: 0;
+}
+
+body[data-tabs="menu"] .summary-head [data-length-group] {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 110px;
+  z-index: 20;
   display: none;
+  flex-direction: column;
+  align-items: stretch;
+  padding: 4px;
+  border: 1px solid var(--border-strong);
+  border-radius: 12px;
+  background: var(--surface);
+  box-shadow: var(--shadow-lg);
 }
 
-@media (max-width: 640px) {
-  body[data-variant="reader"] .video-card {
-    grid-template-columns: minmax(0, 130px) 1fr;
-  }
+body[data-tabs="menu"] .summary-head [data-length-group].open {
+  display: flex;
+  animation: fade-in 0.15s var(--ease);
+}
 
-  body[data-variant="reader"] .video-card .player {
-    min-height: 92px;
-  }
+body[data-tabs="menu"] .summary-head [data-length-group] button {
+  justify-content: flex-start;
+  min-width: 120px;
 }

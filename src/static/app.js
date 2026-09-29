@@ -122,6 +122,8 @@
     $$("[data-length-group] button").forEach((b) =>
       b.setAttribute("aria-checked", String(b.dataset.length === state.length)),
     );
+    const label = $("#length-label");
+    if (label) label.textContent = state.length.charAt(0).toUpperCase() + state.length.slice(1);
   }
 
   $$("[data-length-group]").forEach((group) =>
@@ -388,21 +390,57 @@
     summarize(item.dataset.id);
   });
 
-  // --- layout variants (prototype): ?layout=reader | tabs ---
-  const layoutParam = new URLSearchParams(location.search).get("layout");
-  const variant = ["reader", "tabs"].includes(layoutParam) ? layoutParam : null;
-  const layoutQuery = variant ? `&layout=${variant}` : "";
-  if (variant) document.body.dataset.variant = variant;
-  if (variant === "tabs") {
-    const tabs = $("#view-tabs");
-    tabs.hidden = false;
+  // --- content tabs (prototype): ?tabs=underline | icons | menu ---
+  const tabsParam = new URLSearchParams(location.search).get("tabs");
+  const tabsStyle = ["underline", "icons", "menu"].includes(tabsParam) ? tabsParam : null;
+  const layoutQuery = tabsStyle ? `&tabs=${tabsStyle}` : "";
+  const tabsEl = $("#view-tabs");
+
+  function moveTabIndicator() {
+    const active = $('button[aria-selected="true"]', tabsEl);
+    if (!active || tabsEl.hidden) return;
+    tabsEl.style.setProperty("--x", `${active.offsetLeft}px`);
+    tabsEl.style.setProperty("--w", `${active.offsetWidth}px`);
+    tabsEl.style.setProperty("--h", `${active.offsetHeight}px`);
+    tabsEl.style.setProperty("--y", `${active.offsetTop}px`);
+  }
+
+  if (tabsStyle) {
+    document.body.dataset.tabs = tabsStyle;
+    tabsEl.hidden = false;
     els.result.dataset.tab = "overview";
-    tabs.addEventListener("click", (e) => {
+    tabsEl.addEventListener("click", (e) => {
       const b = e.target.closest("button[data-tab]");
       if (!b) return;
       els.result.dataset.tab = b.dataset.tab;
-      $$("button", tabs).forEach((x) => x.setAttribute("aria-checked", String(x === b)));
+      $$("button[data-tab]", tabsEl).forEach((x) => x.setAttribute("aria-selected", String(x === b)));
+      moveTabIndicator();
     });
+    addEventListener("resize", moveTabIndicator);
+    document.fonts?.ready.then(moveTabIndicator);
+
+    if (tabsStyle === "menu") {
+      // One toolbar: tabs on the left, a compact length menu and the actions on the right.
+      const head = $(".summary-head");
+      head.insertBefore(tabsEl, head.firstChild);
+      const group = $(".summary-card [data-length-group]");
+      const trigger = $("#length-trigger");
+      const setOpen = (open) => {
+        if (open) {
+          group.style.left = `${trigger.offsetLeft}px`;
+          group.style.right = "auto";
+        }
+        group.classList.toggle("open", open);
+        trigger.setAttribute("aria-expanded", String(open));
+      };
+      trigger.addEventListener("click", (e) => {
+        e.stopPropagation();
+        setOpen(!group.classList.contains("open"));
+      });
+      group.addEventListener("click", () => setOpen(false));
+      document.addEventListener("click", () => setOpen(false));
+      addEventListener("keydown", (e) => e.key === "Escape" && setOpen(false));
+    }
   }
 
   // --- "keep going": recent videos + a nudge to summarize another ---
@@ -487,9 +525,11 @@
       els.chapters.innerHTML = "";
       els.chaptersCard.hidden = true;
       $("#next-up").hidden = true;
+      $("#cc-badge").hidden = true;
       if (els.result.dataset.tab) {
         els.result.dataset.tab = "overview";
-        $$("button", $("#view-tabs")).forEach((b) => b.setAttribute("aria-checked", String(b.dataset.tab === "overview")));
+        $$("button[data-tab]", tabsEl).forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === "overview")));
+        moveTabIndicator();
       }
       els.summary.classList.add("streaming");
       els.foot.hidden = true;
@@ -506,7 +546,10 @@
     if (canMorph) {
       // vt-active stays on until we return home; removing it earlier would restart
       // the .result entrance animation and make the summary blink after the morph.
-      document.startViewTransition(() => applyStart(true));
+      const vt = document.startViewTransition(() => applyStart(true));
+      // Don't start the request until the reset has run: a fast (e.g. cached) response
+      // could otherwise arrive first and then be wiped by the late reset.
+      await vt.updateCallbackDone.catch(() => {});
     } else {
       applyStart(false);
     }
@@ -542,9 +585,11 @@
           if (evt.type === "status") setStep(evt.step);
           else if (evt.type === "video") {
             state.source = evt.source;
+            // Only the owner knows what the CC icon means: shown when captions were used.
+            $("#cc-badge").hidden = evt.demo || evt.source !== "transcript";
             const sourceNote = $("#summary-source");
-            sourceNote.textContent = evt.demo ? "Example summary" : evt.source === "transcript" ? "Based on video captions" : "Description-only overview — captions were unavailable; this may miss the video’s content.";
-            sourceNote.hidden = false;
+            sourceNote.textContent = "Example summary";
+            sourceNote.hidden = !evt.demo;
             fillVideoCard(evt.video);
             saveHistory(evt.video);
           } else if (evt.type === "delta") {
@@ -630,7 +675,7 @@
   // --- actions ---
   function exportMarkdown() {
     const v = state.video || {};
-    return `# ${v.title || "Video summary"}\n\n${v.channel ? `*${v.channel}* · ` : ""}https://www.youtube.com/watch?v=${state.videoId}\n\n${state.source === "description" ? "> Description-only overview: captions were unavailable.\n\n" : ""}${state.markdown.trim()}\n`;
+    return `# ${v.title || "Video summary"}\n\n${v.channel ? `*${v.channel}* · ` : ""}https://www.youtube.com/watch?v=${state.videoId}\n\n${state.markdown.trim()}\n`;
   }
 
   els.copy.addEventListener("click", async () => {
