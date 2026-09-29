@@ -8,9 +8,15 @@ When captions cannot be retrieved, a **description-only** result is visibly labe
 
 ## Preview
 
-Current landing interface in dark mode.
+Landing page (dark mode):
 
 ![YTRecap landing page in dark mode: Watch less. Understand more.](docs/images/landing.jpg)
+
+A summary with key takeaways (these screenshots use the built-in sample, labeled "Example summary"):
+
+![YTRecap summary view in light mode](docs/images/result-light.jpg)
+
+![YTRecap summary view in dark mode](docs/images/result-dark.jpg)
 
 ## Run locally
 
