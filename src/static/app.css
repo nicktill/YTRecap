@@ -2082,3 +2082,63 @@ body.has-result .composer-field {
   .composer-meta { margin-top: 6px; }
   .examples { margin-top: 6px; margin-bottom: 8px; }
 }
+
+/* Final polish: keep the message, preview, and action in one visual system. */
+@media (min-width: 801px) {
+  .shell { max-width: 1180px; }
+  .hero {
+    grid-template-columns: minmax(0, 1fr) minmax(390px, 0.82fr);
+    column-gap: clamp(56px, 8vw, 124px);
+    min-height: 392px;
+    padding-top: 46px;
+    padding-bottom: 28px;
+  }
+  .hero::before { top: 30px; }
+  .hero > .eyebrow { margin-bottom: 14px; }
+  .hero h1 { max-width: 620px; font-size: clamp(56px, 5.5vw, 84px); letter-spacing: -.065em; }
+  .hero h1 em { margin-top: 4px; }
+  .hero > .lede { max-width: 470px; margin-top: 16px; font-size: 16px; line-height: 1.45; }
+  .hero > .hero-proof { margin-top: 17px; font-size: 10px; }
+  .hero-preview {
+    width: min(100%, 470px);
+    justify-self: end;
+    margin-top: 8px;
+    padding: 15px;
+    border-radius: 20px;
+    transform: rotate(1.2deg);
+  }
+  .preview-body { grid-template-columns: 39% 1fr; gap: 15px; margin: 14px 0; }
+  .preview-thumb { min-height: 140px; }
+  .preview-copy h2 { font-size: clamp(22px, 2.2vw, 29px); }
+  .preview-summary { margin: 9px 0 12px; font-size: 11px; }
+  .composer {
+    width: min(760px, 100%);
+    margin: 0 auto;
+    transform: translateY(-2px);
+  }
+  .composer::before { margin-bottom: 6px; }
+  .composer-field { min-height: 68px; padding-block: 6px; border-radius: 15px; }
+  .primary-btn { min-height: 50px; }
+  .composer-meta { margin-top: 8px; }
+  .examples { margin: 10px auto 14px; padding: 0; }
+}
+
+body.has-result .topbar { background: color-mix(in srgb, var(--bg) 94%, transparent); border-bottom-color: var(--border); }
+body.has-result .hero,
+body.has-result .composer,
+body.has-result .examples,
+body.has-result .recent { display: none; }
+body.has-result .result { margin-top: 28px; }
+
+@media (min-width: 901px) {
+  body.has-result { overflow-x: hidden; }
+  body.has-result .result {
+    min-height: calc(100dvh - 92px);
+    margin-top: 18px;
+    align-items: start;
+    grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+    gap: 20px;
+  }
+  body.has-result .video-card { position: sticky; top: 86px; }
+  body.has-result .summary-card { max-height: calc(100dvh - 112px); overflow: auto; scrollbar-width: thin; }
+}

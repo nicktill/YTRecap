@@ -392,6 +392,9 @@
     document.body.classList.add("has-result");
     els.result.hidden = false;
     els.errorPanel.hidden = true;
+    requestAnimationFrame(() => {
+      els.result.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
     els.progress.hidden = false;
     els.summary.innerHTML = "";
     els.summary.classList.add("streaming");
