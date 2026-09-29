@@ -1618,3 +1618,5 @@ body.has-result .composer-field {
     opacity: 0;
   }
 }
+
+.source-note { margin: 1rem 1.5rem; color: var(--text-secondary, #888); font-size: .875rem; }
