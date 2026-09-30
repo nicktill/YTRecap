@@ -122,6 +122,8 @@
     $$("[data-length-group] button").forEach((b) =>
       b.setAttribute("aria-checked", String(b.dataset.length === state.length)),
     );
+    const label = $("#length-label");
+    if (label) label.textContent = state.length.charAt(0).toUpperCase() + state.length.slice(1);
   }
 
   $$("[data-length-group]").forEach((group) =>
@@ -238,6 +240,12 @@
       if (node.innerHTML !== sec.html) node.innerHTML = sec.html;
     });
     while (nodes.length > sections.length) els.summary.lastElementChild.remove();
+
+    // Swap the loading steps for real content in the same frame, never leaving a blank card.
+    if (sections.length && !els.progress.hidden) {
+      stopHint();
+      els.progress.hidden = true;
+    }
 
     if (chapters) {
       let node = els.chapters.firstElementChild;
@@ -382,6 +390,73 @@
     summarize(item.dataset.id);
   });
 
+  // --- summary toolbar: content tabs + length menu ---
+  const tabsEl = $("#view-tabs");
+  const fullTab = $('button[data-tab="full"]', tabsEl);
+
+  function moveTabIndicator() {
+    const active = $('button[aria-selected="true"]', tabsEl);
+    if (!active || !active.offsetWidth) return;
+    tabsEl.style.setProperty("--x", `${active.offsetLeft}px`);
+    tabsEl.style.setProperty("--w", `${active.offsetWidth}px`);
+  }
+
+  function selectTab(name) {
+    els.result.dataset.tab = name;
+    $$("button[data-tab]", tabsEl).forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+    moveTabIndicator();
+  }
+
+  tabsEl.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-tab]");
+    if (b) selectTab(b.dataset.tab);
+  });
+  addEventListener("resize", moveTabIndicator);
+  document.fonts?.ready.then(moveTabIndicator);
+
+  {
+    const group = $(".summary-card [data-length-group]");
+    const trigger = $("#length-trigger");
+    const setOpen = (open) => {
+      if (open) {
+        group.style.left = `${trigger.offsetLeft}px`;
+        group.style.right = "auto";
+      }
+      group.classList.toggle("open", open);
+      trigger.setAttribute("aria-expanded", String(open));
+    };
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setOpen(!group.classList.contains("open"));
+    });
+    group.addEventListener("click", () => setOpen(false));
+    document.addEventListener("click", () => setOpen(false));
+    addEventListener("keydown", (e) => e.key === "Escape" && setOpen(false));
+  }
+
+  // --- "keep going": recent videos + a nudge to summarize another ---
+  function renderNextUp() {
+    const others = store.get("history", []).filter((v) => v.id !== state.videoId).slice(0, 3);
+    $("#next-list").innerHTML = others
+      .map(
+        (v) =>
+          `<button class="next-item" type="button" data-id="${escapeHtml(v.id)}"><img src="https://i.ytimg.com/vi/${encodeURIComponent(v.id)}/mqdefault.jpg" alt="" loading="lazy" onerror="this.style.visibility='hidden'" /><span>${escapeHtml(v.title)}</span></button>`,
+      )
+      .join("");
+    $("#next-up").hidden = false;
+  }
+  $("#next-list").addEventListener("click", (e) => {
+    const item = e.target.closest(".next-item");
+    if (!item) return;
+    els.input.value = `https://www.youtube.com/watch?v=${item.dataset.id}`;
+    summarize(item.dataset.id);
+  });
+  $("#another-btn").addEventListener("click", () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    els.input.value = "";
+    els.input.focus();
+  });
+
   // --- main flow ---
   function showFormError(message) {
     els.formError.textContent = message;
@@ -429,21 +504,43 @@
     $("#summary-source").hidden = true;
     els.formError.hidden = true;
     els.form.classList.remove("invalid");
-    document.body.classList.add("has-result");
-    els.result.hidden = false;
-    els.errorPanel.hidden = true;
-    els.progress.hidden = false;
-    startHint();
-    els.summary.innerHTML = "";
-    els.chapters.innerHTML = "";
-    els.chaptersCard.hidden = true;
-    els.summary.classList.add("streaming");
-    els.foot.hidden = true;
-    els.submit.disabled = true;
-    els.submit.classList.add("loading");
-    setActionsEnabled(false);
-    setStep("video");
-    if (isNewVideo) resetVideoCard(videoId);
+    const applyStart = (animated) => {
+      // The shared-element morph replaces the entrance animation, so switch that off.
+      if (animated) document.documentElement.classList.add("vt-active");
+      document.body.classList.add("has-result");
+      els.result.hidden = false;
+      els.errorPanel.hidden = true;
+      els.progress.hidden = false;
+      startHint();
+      els.summary.innerHTML = "";
+      els.chapters.innerHTML = "";
+      els.chaptersCard.hidden = true;
+      $("#next-up").hidden = true;
+      $("#cc-badge").hidden = true;
+      fullTab.hidden = false;
+      selectTab("overview");
+      els.summary.classList.add("streaming");
+      els.foot.hidden = true;
+      els.submit.disabled = true;
+      els.submit.classList.add("loading");
+      setActionsEnabled(false);
+      setStep("video");
+      if (isNewVideo) resetVideoCard(videoId);
+    };
+    const canMorph =
+      !document.body.classList.contains("has-result") &&
+      typeof document.startViewTransition === "function" &&
+      !matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (canMorph) {
+      // vt-active stays on until we return home; removing it earlier would restart
+      // the .result entrance animation and make the summary blink after the morph.
+      const vt = document.startViewTransition(() => applyStart(true));
+      // Don't start the request until the reset has run: a fast (e.g. cached) response
+      // could otherwise arrive first and then be wiped by the late reset.
+      await vt.updateCallbackDone.catch(() => {});
+    } else {
+      applyStart(false);
+    }
 
     const shareUrl = `/watch?v=${videoId}`;
     if (location.pathname + location.search !== shareUrl) history.pushState({ videoId }, "", shareUrl);
@@ -476,14 +573,14 @@
           if (evt.type === "status") setStep(evt.step);
           else if (evt.type === "video") {
             state.source = evt.source;
+            // Only the owner knows what the CC icon means: shown when captions were used.
+            $("#cc-badge").hidden = evt.demo || evt.source !== "transcript";
             const sourceNote = $("#summary-source");
-            sourceNote.textContent = evt.demo ? "Example summary" : evt.source === "transcript" ? "Based on video captions" : "Description-only overview — captions were unavailable; this may miss the video’s content.";
-            sourceNote.hidden = false;
+            sourceNote.textContent = "Example summary";
+            sourceNote.hidden = !evt.demo;
             fillVideoCard(evt.video);
             saveHistory(evt.video);
           } else if (evt.type === "delta") {
-            stopHint();
-            els.progress.hidden = true;
             state.markdown += evt.text;
             scheduleRender();
           } else if (evt.type === "error") throw new Error(evt.message);
@@ -494,6 +591,12 @@
       els.summary.classList.remove("streaming");
       renderSummary();
       renderFooter();
+      // If the model skipped the Summary section, don't offer an empty tab.
+      if (!$("#summary .sec-body")) {
+        fullTab.hidden = true;
+        selectTab("overview");
+      }
+      renderNextUp();
       setActionsEnabled(true);
     } catch (err) {
       if (err.name === "AbortError") return;
@@ -565,7 +668,7 @@
   // --- actions ---
   function exportMarkdown() {
     const v = state.video || {};
-    return `# ${v.title || "Video summary"}\n\n${v.channel ? `*${v.channel}* · ` : ""}https://www.youtube.com/watch?v=${state.videoId}\n\n${state.source === "description" ? "> Description-only overview: captions were unavailable.\n\n" : ""}${state.markdown.trim()}\n`;
+    return `# ${v.title || "Video summary"}\n\n${v.channel ? `*${v.channel}* · ` : ""}https://www.youtube.com/watch?v=${state.videoId}\n\n${state.markdown.trim()}\n`;
   }
 
   els.copy.addEventListener("click", async () => {
@@ -620,6 +723,7 @@
     state.controller?.abort();
     state.videoId = null;
     document.body.classList.remove("has-result");
+    document.documentElement.classList.remove("vt-active");
     els.result.hidden = true;
     els.input.value = "";
     document.title = "YTRecap — Summarize any YouTube video";
