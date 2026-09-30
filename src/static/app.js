@@ -390,57 +390,48 @@
     summarize(item.dataset.id);
   });
 
-  // --- content tabs (prototype): ?tabs=underline | icons | menu ---
-  const tabsParam = new URLSearchParams(location.search).get("tabs");
-  const tabsStyle = ["underline", "icons", "menu"].includes(tabsParam) ? tabsParam : null;
-  const layoutQuery = tabsStyle ? `&tabs=${tabsStyle}` : "";
+  // --- summary toolbar: content tabs + length menu ---
   const tabsEl = $("#view-tabs");
+  const fullTab = $('button[data-tab="full"]', tabsEl);
 
   function moveTabIndicator() {
     const active = $('button[aria-selected="true"]', tabsEl);
-    if (!active || tabsEl.hidden) return;
+    if (!active || !active.offsetWidth) return;
     tabsEl.style.setProperty("--x", `${active.offsetLeft}px`);
     tabsEl.style.setProperty("--w", `${active.offsetWidth}px`);
-    tabsEl.style.setProperty("--h", `${active.offsetHeight}px`);
-    tabsEl.style.setProperty("--y", `${active.offsetTop}px`);
   }
 
-  if (tabsStyle) {
-    document.body.dataset.tabs = tabsStyle;
-    tabsEl.hidden = false;
-    els.result.dataset.tab = "overview";
-    tabsEl.addEventListener("click", (e) => {
-      const b = e.target.closest("button[data-tab]");
-      if (!b) return;
-      els.result.dataset.tab = b.dataset.tab;
-      $$("button[data-tab]", tabsEl).forEach((x) => x.setAttribute("aria-selected", String(x === b)));
-      moveTabIndicator();
-    });
-    addEventListener("resize", moveTabIndicator);
-    document.fonts?.ready.then(moveTabIndicator);
+  function selectTab(name) {
+    els.result.dataset.tab = name;
+    $$("button[data-tab]", tabsEl).forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === name)));
+    moveTabIndicator();
+  }
 
-    if (tabsStyle === "menu") {
-      // One toolbar: tabs on the left, a compact length menu and the actions on the right.
-      const head = $(".summary-head");
-      head.insertBefore(tabsEl, head.firstChild);
-      const group = $(".summary-card [data-length-group]");
-      const trigger = $("#length-trigger");
-      const setOpen = (open) => {
-        if (open) {
-          group.style.left = `${trigger.offsetLeft}px`;
-          group.style.right = "auto";
-        }
-        group.classList.toggle("open", open);
-        trigger.setAttribute("aria-expanded", String(open));
-      };
-      trigger.addEventListener("click", (e) => {
-        e.stopPropagation();
-        setOpen(!group.classList.contains("open"));
-      });
-      group.addEventListener("click", () => setOpen(false));
-      document.addEventListener("click", () => setOpen(false));
-      addEventListener("keydown", (e) => e.key === "Escape" && setOpen(false));
-    }
+  tabsEl.addEventListener("click", (e) => {
+    const b = e.target.closest("button[data-tab]");
+    if (b) selectTab(b.dataset.tab);
+  });
+  addEventListener("resize", moveTabIndicator);
+  document.fonts?.ready.then(moveTabIndicator);
+
+  {
+    const group = $(".summary-card [data-length-group]");
+    const trigger = $("#length-trigger");
+    const setOpen = (open) => {
+      if (open) {
+        group.style.left = `${trigger.offsetLeft}px`;
+        group.style.right = "auto";
+      }
+      group.classList.toggle("open", open);
+      trigger.setAttribute("aria-expanded", String(open));
+    };
+    trigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setOpen(!group.classList.contains("open"));
+    });
+    group.addEventListener("click", () => setOpen(false));
+    document.addEventListener("click", () => setOpen(false));
+    addEventListener("keydown", (e) => e.key === "Escape" && setOpen(false));
   }
 
   // --- "keep going": recent videos + a nudge to summarize another ---
@@ -526,11 +517,8 @@
       els.chaptersCard.hidden = true;
       $("#next-up").hidden = true;
       $("#cc-badge").hidden = true;
-      if (els.result.dataset.tab) {
-        els.result.dataset.tab = "overview";
-        $$("button[data-tab]", tabsEl).forEach((b) => b.setAttribute("aria-selected", String(b.dataset.tab === "overview")));
-        moveTabIndicator();
-      }
+      fullTab.hidden = false;
+      selectTab("overview");
       els.summary.classList.add("streaming");
       els.foot.hidden = true;
       els.submit.disabled = true;
@@ -554,7 +542,7 @@
       applyStart(false);
     }
 
-    const shareUrl = `/watch?v=${videoId}${layoutQuery}`;
+    const shareUrl = `/watch?v=${videoId}`;
     if (location.pathname + location.search !== shareUrl) history.pushState({ videoId }, "", shareUrl);
 
     try {
@@ -603,6 +591,11 @@
       els.summary.classList.remove("streaming");
       renderSummary();
       renderFooter();
+      // If the model skipped the Summary section, don't offer an empty tab.
+      if (!$("#summary .sec-body")) {
+        fullTab.hidden = true;
+        selectTab("overview");
+      }
       renderNextUp();
       setActionsEnabled(true);
     } catch (err) {

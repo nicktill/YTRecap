@@ -55,8 +55,6 @@
         <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></symbol>
         <symbol id="i-sliders" viewBox="0 0 24 24"><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></symbol>
         <symbol id="i-cc" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3.5" /><path d="M10.4 10.3a2.3 2.3 0 1 0 0 3.4M16.4 10.3a2.3 2.3 0 1 0 0 3.4" /></symbol>
-        <symbol id="i-bolt" viewBox="0 0 24 24"><path d="M13 3L5 13.5h6L10 21l8-10.5h-6z" /></symbol>
-        <symbol id="i-doc" viewBox="0 0 24 24"><path d="M7 3h7l4 4v14H7z" /><path d="M14 3v4h4M10 12h5M10 16h5" /></symbol>
         <symbol id="i-chevron" viewBox="0 0 24 24"><path d="M6 9l6 6 6-6" /></symbol>
         <symbol id="i-play" viewBox="0 0 24 24"><path fill="currentColor" stroke="none" d="M8 5.5v13a1 1 0 0 0 1.5.86l10.5-6.5a1 1 0 0 0 0-1.72L9.5 4.64A1 1 0 0 0 8 5.5z" /></symbol>
       </defs>
@@ -130,7 +128,7 @@
       </section>
 
 
-      <section class="result" id="result" hidden aria-live="polite">
+      <section class="result" id="result" data-tab="overview" hidden aria-live="polite">
         <aside class="side">
           <div class="video-card">
             <div class="player" id="player">
@@ -157,6 +155,11 @@
 
         <article class="summary-card">
           <header class="summary-head">
+            <div class="view-tabs" id="view-tabs" role="tablist" aria-label="Summary sections">
+              <button type="button" role="tab" aria-selected="true" data-tab="overview">Overview</button>
+              <button type="button" role="tab" aria-selected="false" data-tab="full">Full summary</button>
+              <i class="tab-indicator" aria-hidden="true"></i>
+            </div>
             <button class="length-trigger" id="length-trigger" type="button" aria-haspopup="true" aria-expanded="false"><span id="length-label">Standard</span><svg><use href="#i-chevron" /></svg></button>
             <div class="segmented segmented-sm" role="radiogroup" aria-label="Summary length" data-length-group>
               <button type="button" role="radio" data-length="brief">Brief</button>
@@ -169,12 +172,6 @@
               <button class="icon-btn" id="share-btn" type="button" aria-label="Copy share link" data-tip="Share"><svg><use href="#i-share" /></svg></button>
             </div>
           </header>
-
-          <div class="view-tabs" id="view-tabs" role="tablist" aria-label="Summary sections" hidden>
-            <button type="button" role="tab" aria-selected="true" data-tab="overview"><svg><use href="#i-bolt" /></svg><span>Overview</span></button>
-            <button type="button" role="tab" aria-selected="false" data-tab="full"><svg><use href="#i-doc" /></svg><span>Full summary</span></button>
-            <i class="tab-indicator" aria-hidden="true"></i>
-          </div>
 
           <div class="progress-wrap" id="progress">
             <ol class="progress">

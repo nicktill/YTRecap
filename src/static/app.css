@@ -1882,22 +1882,19 @@ html.vt-active .result { animation: none; }
 }
 
 /* ==========================================================================
-   Content tabs (prototype, opt-in: ?tabs=underline | icons | menu).
-   Tabs choose WHAT you read (Overview / Full summary); the Brief / Standard /
-   Detailed control chooses HOW MUCH. Tabs get a different visual language
-   (text + sliding indicator) so the two are never confused.
+   Summary toolbar: content tabs + length menu + actions.
+   Tabs choose WHAT you read (Overview / Full summary); the length menu chooses
+   HOW MUCH (Brief / Standard / Detailed), so the two are never confused.
    ========================================================================== */
-.view-tabs,
-.length-trigger {
-  display: none;
+.summary-head {
+  align-items: stretch;
+  padding: 0 14px 0 clamp(20px, 4vw, 40px);
 }
 
-body[data-tabs] .view-tabs {
+.view-tabs {
   position: relative;
   display: flex;
   gap: 22px;
-  padding: 0 clamp(20px, 4vw, 40px);
-  border-bottom: 1px solid var(--border);
 }
 
 .view-tabs button,
@@ -1909,38 +1906,25 @@ body[data-tabs] .view-tabs {
 }
 
 .view-tabs button {
-  white-space: nowrap;
-  border: 0;
-  padding: 0;
   position: relative;
   z-index: 1;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  height: 46px;
+  height: 52px;
+  padding: 0;
+  border: 0;
   color: var(--muted);
   font-size: 14px;
   font-weight: 500;
+  white-space: nowrap;
   transition: color 0.2s;
 }
 
-.view-tabs button:hover {
-  color: var(--text);
-}
-
+.view-tabs button:hover,
 .view-tabs button[aria-selected="true"] {
   color: var(--text);
 }
 
-.view-tabs button svg {
+.view-tabs button[hidden] {
   display: none;
-  width: 16px;
-  height: 16px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 1.8;
-  stroke-linecap: round;
-  stroke-linejoin: round;
 }
 
 .tab-indicator {
@@ -1956,66 +1940,13 @@ body[data-tabs] .view-tabs {
 }
 
 /* Which sections each tab shows */
-body[data-tabs] .result[data-tab="overview"] .summary .sec-body,
-body[data-tabs] .result[data-tab="full"] .summary .sec-tldr,
-body[data-tabs] .result[data-tab="full"] .summary .sec-takeaways {
+.result[data-tab="overview"] .summary .sec-body,
+.result[data-tab="full"] .summary .sec-tldr,
+.result[data-tab="full"] .summary .sec-takeaways {
   display: none;
 }
 
-/* Style 1: underline. Quiet text tabs with a sliding red underline. */
-
-/* Style 2: icons. Icon + label chips in the accent colour (tinted, not grey). */
-body[data-tabs="icons"] .view-tabs {
-  gap: 6px;
-  padding-top: 12px;
-  padding-bottom: 12px;
-  border-bottom: 0;
-}
-
-body[data-tabs="icons"] .view-tabs button {
-  height: 36px;
-  padding: 0 14px;
-  border-radius: 10px;
-}
-
-body[data-tabs="icons"] .view-tabs button svg {
-  display: block;
-}
-
-body[data-tabs="icons"] .view-tabs button[aria-selected="true"] {
-  color: var(--accent);
-}
-
-body[data-tabs="icons"] .tab-indicator {
-  top: var(--y, 12px);
-  bottom: auto;
-  height: var(--h, 36px);
-  border-radius: 10px;
-  background: var(--accent-soft);
-  box-shadow: inset 0 0 0 1px var(--accent-line);
-}
-
-/* Style 3: menu. One toolbar: tabs left; length becomes a compact menu on the right. */
-body[data-tabs="menu"] .summary-head {
-  align-items: stretch;
-  padding: 0 14px 0 clamp(20px, 4vw, 40px);
-}
-
-body[data-tabs="menu"] .summary-head .view-tabs {
-  padding: 0;
-  border-bottom: 0;
-}
-
-body[data-tabs="menu"] .summary-head .view-tabs button {
-  height: 52px;
-}
-
-body[data-tabs="menu"] .summary-head .summary-actions {
-  align-items: center;
-  margin-left: auto;
-}
-
-body[data-tabs="menu"] .length-trigger {
+.length-trigger {
   display: inline-flex;
   align-items: center;
   align-self: center;
@@ -2031,13 +1962,13 @@ body[data-tabs="menu"] .length-trigger {
   transition: border-color 0.2s, color 0.2s;
 }
 
-body[data-tabs="menu"] .length-trigger:hover,
-body[data-tabs="menu"] .length-trigger[aria-expanded="true"] {
+.length-trigger:hover,
+.length-trigger[aria-expanded="true"] {
   border-color: var(--border-strong);
   color: var(--text);
 }
 
-body[data-tabs="menu"] .length-trigger svg {
+.length-trigger svg {
   width: 14px;
   height: 14px;
   fill: none;
@@ -2047,14 +1978,14 @@ body[data-tabs="menu"] .length-trigger svg {
   stroke-linejoin: round;
 }
 
-body[data-tabs="menu"] .summary-head .summary-actions {
-  margin-left: 0;
+.summary-head .summary-actions {
+  align-items: center;
 }
 
-body[data-tabs="menu"] .summary-head [data-length-group] {
+/* The three length options live in a small popover under the trigger. */
+.summary-head [data-length-group] {
   position: absolute;
   top: calc(100% + 6px);
-  right: 110px;
   z-index: 20;
   display: none;
   flex-direction: column;
@@ -2066,24 +1997,24 @@ body[data-tabs="menu"] .summary-head [data-length-group] {
   box-shadow: var(--shadow-lg);
 }
 
-body[data-tabs="menu"] .summary-head [data-length-group].open {
+.summary-head [data-length-group].open {
   display: flex;
   animation: fade-in 0.15s var(--ease);
 }
 
-body[data-tabs="menu"] .summary-head [data-length-group] button {
+.summary-head [data-length-group] button {
   justify-content: flex-start;
   min-width: 120px;
 }
 
-/* Phones: the menu toolbar wraps into two rows (tabs on top, length + actions below). */
+/* Phones: the toolbar wraps into two rows (tabs on top, length + actions below). */
 @media (max-width: 640px) {
-  body[data-tabs="menu"] .summary-head {
+  .summary-head {
     flex-wrap: wrap;
     padding: 0 12px 10px;
   }
 
-  body[data-tabs="menu"] .summary-head .view-tabs {
+  .summary-head .view-tabs {
     order: 1;
     flex: 0 0 auto;
     width: calc(100% + 24px);
@@ -2092,17 +2023,17 @@ body[data-tabs="menu"] .summary-head [data-length-group] button {
     border-bottom: 1px solid var(--border);
   }
 
-  body[data-tabs="menu"] .length-trigger {
+  .length-trigger {
     order: 2;
     margin: 10px 0 0;
   }
 
-  body[data-tabs="menu"] .summary-head .summary-actions {
+  .summary-head .summary-actions {
     order: 3;
     margin: 10px 0 0 auto;
   }
 
-  body[data-tabs="menu"] .summary-head .view-tabs button {
+  .view-tabs button {
     height: 46px;
   }
 }
