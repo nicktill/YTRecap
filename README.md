@@ -8,9 +8,15 @@ When captions cannot be retrieved, a **description-only** result is visibly labe
 
 ## Preview
 
-Current landing interface in dark mode.
+Landing page (dark mode):
 
 ![YTRecap landing page in dark mode: Watch less. Understand more.](docs/images/landing.jpg)
+
+A real summary, built from the video's captions, with key takeaways and clickable timestamps:
+
+![YTRecap summary with TL;DR and key takeaways](docs/images/result-top.jpg)
+
+![YTRecap chapters with clickable timestamps](docs/images/result-chapters.jpg)
 
 ## Run locally
 
